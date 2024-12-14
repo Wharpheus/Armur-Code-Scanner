@@ -1,0 +1,156 @@
+{
+    "mappings": [
+        {
+            "category": "security_issues",
+            "languages": [
+                {
+                    "language": "go",
+                    "tools": [
+                        {
+                            "toolname": "gosec",
+                            "custom_rule_support": true
+                        }
+                    ]
+                },
+                {
+                    "language": "python",
+                    "tools": [
+                        {
+                            "toolname": "bandit",
+                            "custom_rule_support": true
+                        }
+                    ]
+                },
+                {
+                    "language": "js",
+                    "tools": [
+                        {
+                            "toolname": "eslint",
+                            "custom_rule_support": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "antipatterns_bugs",
+            "languages": [
+                {
+                    "language": "go",
+                    "tools": [
+                        {
+                            "toolname": "gosec",
+                            "custom_rule_support": true
+                        },
+                        {
+                            "toolname": "govet",
+                            "custom_rule_support": false
+                        },
+                        {
+                            "toolname": "golint",
+                            "custom_rule_support": false
+                        },
+                        {
+                            "toolname": "staticcheck",
+                            "custom_rule_support": false
+                        }
+                    ]
+                },
+                {
+                    "language": "python",
+                    "tools": [
+                        {
+                            "toolname": "pylint",
+                            "custom_rule_support": true
+                        }
+                    ]
+                },
+                {
+                    "language": "js",
+                    "tools": [
+                        {
+                            "toolname": "eslint",
+                            "custom_rule_support": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "docstring_absent",
+            "languages": [
+                {
+                    "language": "go",
+                    "tools": [
+                        {
+                            "toolname": "golint",
+                            "custom_rule_support": false
+                        },
+                        {
+                            "toolname": "staticcheck",
+                            "custom_rule_support": false
+                        }
+                    ]
+                },
+                {
+                    "language": "python",
+                    "tools": [
+                        {
+                            "toolname": "pydocstyle",
+                            "custom_rule_support": false
+                        }
+                    ]
+                },
+                {
+                    "language": "js",
+                    "tools": [
+                        {
+                            "toolname": "eslint",
+                            "custom_rule_support": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "complex_functions",
+            "languages": [
+                {
+                    "language": "go",
+                    "tools": [
+                        {
+                            "toolname": "golint",
+                            "custom_rule_support": false
+                        },
+                        {
+                            "toolname": "gocyclo",
+                            "custom_rule_support": false
+                        },
+                        {
+                            "toolname": "staticcheck",
+                            "custom_rule_support": false
+                        }
+                    ]
+                },
+                {
+                    "language": "python",
+                    "tools": [
+                        {
+                            "toolname": "radon",
+                            "custom_rule_support": false
+                        }
+                    ]
+                },
+                {
+                    "language": "js",
+                    "tools": [
+                        {
+                            "toolname": "eslint",
+                            "custom_rule_support": true
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

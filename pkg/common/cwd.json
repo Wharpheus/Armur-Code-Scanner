@@ -1,0 +1,704 @@
+[
+  {
+    "cwe": "CWE-20",
+    "good_practice_example": {
+      "go": "if userInput, err := strconv.Atoi(input); err == nil {\n  processInput(userInput)\n}",
+      "py": "if user_input.isdigit():\n  process_input(int(user_input))",
+      "js": "if (!isNaN(userInput)) {\n  processInput(Number(userInput));\n}"
+    },
+    "bad_practice_example": {
+      "go": "processInput(input)",
+      "py": "process_input(user_input)",
+      "js": "processInput(userInput);"
+    }
+  },
+  {
+    "cwe": "CWE-78",
+    "good_practice_example": {
+      "go": "cmd := exec.Command(\"/bin/ls\", \"-al\")\noutput, _ := cmd.Output()",
+      "py": "subprocess.run(['/bin/ls', '-al'])",
+      "js": "const { execFile } = require('child_process');\nexecFile('/bin/ls', ['-al'], (err, stdout) => console.log(stdout));"
+    },
+    "bad_practice_example": {
+      "go": "cmd := exec.Command(\"/bin/ls -al \" + userInput)\noutput, _ := cmd.Output()",
+      "py": "subprocess.run(f'/bin/ls -al {user_input}', shell=True)",
+      "js": "const { exec } = require('child_process');\nexec('/bin/ls -al ' + userInput, (err, stdout) => console.log(stdout));"
+    }
+  },
+  {
+    "cwe": "CWE-79",
+    "good_practice_example": {
+      "go": "template := template.Must(template.ParseFiles(\"template.html\"))\ntemplate.Execute(w, data)",
+      "py": "return render_template('template.html', data=data)",
+      "js": "res.render('template', { data: userInput });"
+    },
+    "bad_practice_example": {
+      "go": "w.Write([]byte(userInput))",
+      "py": "return f'<div>{user_input}</div>'",
+      "js": "res.send('<div>' + userInput + '</div>');"
+    }
+  },
+  {
+    "cwe": "CWE-89",
+    "good_practice_example": {
+      "go": "query := `SELECT * FROM users WHERE id = ?`\ndb.Query(query, userId)",
+      "py": "query = 'SELECT * FROM users WHERE id = %s'\ncur.execute(query, (user_id,))",
+      "js": "const query = 'SELECT * FROM users WHERE id = ?';\ndb.query(query, [userId]);"
+    },
+    "bad_practice_example": {
+      "go": "query := `SELECT * FROM users WHERE id = ` + userId\nrows, err := db.Query(query)",
+      "py": "query = 'SELECT * FROM users WHERE id = ' + user_id\ncur.execute(query)",
+      "js": "const query = 'SELECT * FROM users WHERE id = ' + userId;\ndb.query(query);"
+    }
+  },
+  {
+    "cwe": "CWE-90",
+    "good_practice_example": {
+      "go": "ldapConn := ldap.Dial(\"tcp\", \"ldap.example.com\")\nfilter := fmt.Sprintf(\"(uid=%s)\", ldap.EscapeFilter(userInput))\nsearchRequest := ldap.NewSearchRequest(\"ou=users,dc=example,dc=com\", ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, filter, nil, nil)",
+      "py": "filter = 'uid=' + ldap3.utils.conv.escape_filter_chars(user_input)\nconn.search(search_base='ou=users,dc=example,dc=com', search_filter=filter)",
+      "js": "const filter = `(uid=${escapeLDAP(userInput)})`;\nldap.search({ filter }, callback);"
+    },
+    "bad_practice_example": {
+      "go": "ldapConn := ldap.Dial(\"tcp\", \"ldap.example.com\")\nsearchRequest := ldap.NewSearchRequest(\"ou=users,dc=example,dc=com\", ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, \"(uid=\" + userInput + \")\", nil, nil)",
+      "py": "filter = 'uid=' + user_input\nconn.search(search_base='ou=users,dc=example,dc=com', search_filter=filter)",
+      "js": "const filter = `(uid=${userInput})`;\nldap.search({ filter }, callback);"
+    }
+  },
+  {
+    "cwe": "CWE-94",
+    "good_practice_example": {
+      "go": "template := template.Must(template.New(\"example\").Parse(`Hello {{.Name}}`))\n_ = template.Execute(os.Stdout, map[string]string{\"Name\": \"User\"})",
+      "py": "template = Template('Hello {{name}}')\nrendered = template.render(name='User')",
+      "js": "const template = Handlebars.compile('Hello {{name}}');\nconsole.log(template({ name: 'User' }));"
+    },
+    "bad_practice_example": {
+      "go": "script := userInput\nexecuteScript(script)",
+      "py": "exec(user_input)",
+      "js": "eval(userInput);"
+    }
+  },
+  {
+    "cwe": "CWE-400",
+    "good_practice_example": {
+      "go": "http.HandleFunc(\"/process\", func(w http.ResponseWriter, r *http.Request) {\n  if len(r.FormValue(\"input\")) > 100 {\n    http.Error(w, \"Input too large\", http.StatusBadRequest)\n    return\n  }\n  processRequest(r)\n})",
+      "py": "if len(request.form['input']) > 100:\n  return 'Input too large', 400\nprocess_request(request.form['input'])",
+      "js": "app.post('/process', (req, res) => {\n  if (req.body.input.length > 100) {\n    return res.status(400).send('Input too large');\n  }\n  processRequest(req.body.input);\n});"
+    },
+    "bad_practice_example": {
+      "go": "processRequest(r)",
+      "py": "process_request(request.form['input'])",
+      "js": "processRequest(req.body.input);"
+    }
+  },
+  {
+    "cwe": "CWE-287",
+    "good_practice_example": {
+      "go": "token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{\n\"id\": user.ID,\n})\ntokenString, _ := token.SignedString([]byte(os.Getenv(\"SECRET\")))",
+      "py": "token = jwt.encode({'id': user.id}, os.getenv('SECRET'), algorithm='HS256')",
+      "js": "const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });"
+    },
+    "bad_practice_example": {
+      "go": "token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{\n\"id\": user.ID,\n})\ntokenString, _ := token.SignedString([]byte(\"weak_secret\"))",
+      "py": "token = jwt.encode({'id': user.id}, 'weak_secret', algorithm='HS256')",
+      "js": "const token = jwt.sign({ id: user.id }, 'weak_secret');"
+    }
+  },
+  {
+    "cwe": "CWE-306",
+    "good_practice_example": {
+      "go": "if isAuthenticated(user) {\n  performSensitiveAction()\n}",
+      "py": "if is_authenticated(user):\n  perform_sensitive_action()",
+      "js": "if (isAuthenticated(user)) {\n  performSensitiveAction();\n}"
+    },
+    "bad_practice_example": {
+      "go": "performSensitiveAction()",
+      "py": "perform_sensitive_action()",
+      "js": "performSensitiveAction();"
+    }
+  },
+  {
+    "cwe": "CWE-302",
+    "good_practice_example": {
+      "go": "if user.HasPermission(\"ADMIN\") {\n  deleteUser(userID)\n}",
+      "py": "if user.has_permission('ADMIN'):\n  delete_user(user_id)",
+      "js": "if (user.hasPermission('ADMIN')) {\n  deleteUser(userId);\n}"
+    },
+    "bad_practice_example": {
+      "go": "deleteUser(userID)",
+      "py": "delete_user(user_id)",
+      "js": "deleteUser(userId);"
+    }
+  },
+  {
+    "cwe": "CWE-269",
+    "good_practice_example": {
+      "go": "if role == \"admin\" {\n  grantAccess(user)\n}",
+      "py": "if role == 'admin':\n  grant_access(user)",
+      "js": "if (role === 'admin') {\n  grantAccess(user);\n}"
+    },
+    "bad_practice_example": {
+      "go": "grantAccess(user)",
+      "py": "grant_access(user)",
+      "js": "grantAccess(user);"
+    }
+  },
+  {
+    "cwe": "CWE-284",
+    "good_practice_example": {
+      "go": "db, err := sql.Open(\"mysql\", \"user:password@tcp(127.0.0.1:3306)/dbname?parseTime=true&multiStatements=false\")",
+      "py": "connection = mysql.connector.connect(user='user', password='password', host='127.0.0.1', database='dbname', use_pure=True)",
+      "js": "const connection = mysql.createConnection({user: 'user', password: 'password', host: 'localhost', database: 'dbname'});"
+    },
+    "bad_practice_example": {
+      "go": "db, err := sql.Open(\"mysql\", \"user:password@tcp(127.0.0.1:3306)/dbname\")",
+      "py": "connection = mysql.connector.connect(user='user', password='password', host='127.0.0.1', database='dbname')",
+      "js": "const connection = mysql.createConnection({user: 'user', password: 'password', host: 'localhost', database: 'dbname'});"
+    }
+  },
+  {
+    "cwe": "CWE-922",
+    "good_practice_example": {
+      "go": "session.Options.Secure = true\nsession.Options.HttpOnly = true",
+      "py": "session['secure'] = True\nsession['httponly'] = True",
+      "js": "res.cookie('session', sessionToken, { secure: true, httpOnly: true });"
+    },
+    "bad_practice_example": {
+      "go": "session.Options.Secure = false",
+      "py": "session['secure'] = False",
+      "js": "res.cookie('session', sessionToken, { secure: false });"
+    }
+  },
+  {
+    "cwe": "CWE-384",
+    "good_practice_example": {
+      "go": "token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{\n\"id\": user.ID,\n\"exp\": time.Now().Add(time.Hour).Unix(),\n})\n_ = token.SignedString([]byte(secretKey))",
+      "py": "token = jwt.encode({'id': user.id, 'exp': datetime.utcnow() + timedelta(hours=1)}, secret_key, algorithm='HS256')",
+      "js": "const token = jwt.sign({ id: user.id, exp: Math.floor(Date.now() / 1000) + (60 * 60) }, secretKey);"
+    },
+    "bad_practice_example": {
+      "go": "token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{\n\"id\": user.ID,\n})\n_ = token.SignedString([]byte(secretKey))",
+      "py": "token = jwt.encode({'id': user.id}, secret_key, algorithm='HS256')",
+      "js": "const token = jwt.sign({ id: user.id }, secretKey);"
+    }
+  },
+  {
+    "cwe": "CWE-613",
+    "good_practice_example": {
+      "go": "if session.IsAuthenticated() {\n  accessResource()\n}",
+      "py": "if session.is_authenticated():\n  access_resource()",
+      "js": "if (session.isAuthenticated()) {\n  accessResource();\n}"
+    },
+    "bad_practice_example": {
+      "go": "accessResource()",
+      "py": "access_resource()",
+      "js": "accessResource();"
+    }
+  },
+  {
+    "cwe": "CWE-327",
+    "good_practice_example": {
+      "go": "block, err := aes.NewCipher(key)\nif err != nil {\n  log.Fatal(err)\n}",
+      "py": "cipher = AES.new(key, AES.MODE_CBC)\nif cipher is None:\n  raise ValueError('Invalid Cipher')",
+      "js": "const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);\nif (!cipher) throw new Error('Invalid Cipher');"
+    },
+    "bad_practice_example": {
+      "go": "cipher := des.NewCipher(key)",
+      "py": "cipher = DES.new(key, DES.MODE_CBC)",
+      "js": "const cipher = crypto.createCipheriv('des', key, iv);"
+    }
+  },
+  {
+    "cwe": "CWE-330",
+    "good_practice_example": {
+      "go": "rand.Seed(time.Now().UnixNano())\nsecureToken := make([]byte, 64)\n_, err := rand.Read(secureToken)",
+      "py": "secure_token = os.urandom(64)",
+      "js": "const secureToken = crypto.randomBytes(64);"
+    },
+    "bad_practice_example": {
+      "go": "random := rand.Intn(1000000)",
+      "py": "token = random.randint(1, 1000000)",
+      "js": "const token = Math.floor(Math.random() * 1000000);"
+    }
+  },
+  {
+    "cwe": "CWE-338",
+    "good_practice_example": {
+      "go": "key := make([]byte, 32)\n_, err := rand.Read(key)",
+      "py": "key = os.urandom(32)",
+      "js": "const key = crypto.randomBytes(32);"
+    },
+    "bad_practice_example": {
+      "go": "key := rand.Intn(1000000)",
+      "py": "key = random.randint(1, 1000000)",
+      "js": "const key = Math.floor(Math.random() * 1000000);"
+    }
+  },
+  {
+    "cwe": "CWE-325",
+    "good_practice_example": {
+      "go": "cipher, err := aes.NewCipher(key)\nif err != nil {\n  log.Fatal(err)\n}\ngcm, err := cipher.NewGCM(cipher)\nif err != nil {\n  log.Fatal(err)\n}",
+      "py": "cipher = AES.new(key, AES.MODE_GCM)\nif cipher is None:\n  raise ValueError('Invalid Cipher')",
+      "js": "const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);\nif (!cipher) throw new Error('Invalid Cipher');"
+    },
+    "bad_practice_example": {
+      "go": "cipher := des.NewCipher(key)",
+      "py": "cipher = DES.new(key, DES.MODE_CBC)",
+      "js": "const cipher = crypto.createCipheriv('des', key, iv);"
+    }
+  },
+  {
+    "cwe": "CWE-200",
+    "good_practice_example": {
+      "go": "if user.IsAuthorized() {\n  showSensitiveData()\n}",
+      "py": "if user.is_authorized():\n  show_sensitive_data()",
+      "js": "if (user.isAuthorized()) {\n  showSensitiveData();\n}"
+    },
+    "bad_practice_example": {
+      "go": "showSensitiveData()",
+      "py": "show_sensitive_data()",
+      "js": "showSensitiveData();"
+    }
+  },
+  {
+    "cwe": "CWE-201",
+    "good_practice_example": {
+      "go": "log.Printf(\"User %s attempted to access sensitive data\", user.ID)",
+      "py": "logging.info(f'User {user.id} attempted to access sensitive data')",
+      "js": "console.info(`User ${user.id} attempted to access sensitive data`);"
+    },
+    "bad_practice_example": {
+      "go": "log.Printf(\"Sensitive data: %s\", sensitiveData)",
+      "py": "logging.info(f'Sensitive data: {sensitive_data}')",
+      "js": "console.info(`Sensitive data: ${sensitiveData}`);"
+    }
+  },
+  {
+    "cwe": "CWE-598",
+    "good_practice_example": {
+      "go": "http.Redirect(w, r, \"/login\", http.StatusFound)",
+      "py": "return redirect('/login')",
+      "js": "window.location.href = '/login';"
+    },
+    "bad_practice_example": {
+      "go": "fmt.Fprintf(w, \"<a href='/login'>Login</a>\")",
+      "py": "return f\"<a href='/login'>Login</a>\"",
+      "js": "document.write(\"<a href='/login'>Login</a>\");"
+    }
+  },
+  {
+    "cwe": "CWE-209",
+    "good_practice_example": {
+      "go": "log.Printf(\"Error occurred, please contact support\")",
+      "py": "logging.error('An error occurred, please contact support')",
+      "js": "console.error('An error occurred, please contact support');"
+    },
+    "bad_practice_example": {
+      "go": "log.Printf(\"Error: %v\", err)",
+      "py": "logging.error(f'Error: {str(err)}')",
+      "js": "console.error(`Error: ${err}`);"
+    }
+  },
+  {
+    "cwe": "CWE-310",
+    "good_practice_example": {
+      "go": "ciphertext, err := aes.NewCipher(key)\nif err != nil {\n  log.Fatal(err)\n}",
+      "py": "cipher = AES.new(key, AES.MODE_CBC)\nif cipher is None:\n  raise ValueError('Invalid cipher')",
+      "js": "const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);\nif (!cipher) throw new Error('Invalid cipher');"
+    },
+    "bad_practice_example": {
+      "go": "ciphertext := des.NewCipher(key)",
+      "py": "cipher = DES.new(key, DES.MODE_CBC)",
+      "js": "const cipher = crypto.createCipheriv('des', key, iv);"
+    }
+  },
+  {
+    "cwe": "CWE-502",
+    "good_practice_example": {
+      "go": "decoder := json.NewDecoder(r.Body)\nerr := decoder.Decode(&payload)\nif err != nil {\n  log.Fatal(err)\n}",
+      "py": "try:\n  payload = json.loads(request.body)\nexcept ValueError:\n  raise InvalidPayloadError()",
+      "js": "try {\n  const payload = JSON.parse(request.body);\n} catch (error) {\n  throw new Error('Invalid payload');\n}"
+    },
+    "bad_practice_example": {
+      "go": "payload := gob.NewDecoder(r.Body)\npayload.Decode(&input)",
+      "py": "payload = pickle.loads(request.body)",
+      "js": "const payload = eval(request.body);"
+    }
+  },
+  {
+    "cwe": "CWE-917",
+    "good_practice_example": {
+      "go": "valid, err := regexp.MatchString(`^[a-zA-Z0-9]+$`, input)\nif err != nil || !valid {\n  return fmt.Errorf(\"Invalid input\")\n}",
+      "py": "if not re.match(r'^[a-zA-Z0-9]+$', input):\n  raise ValueError('Invalid input')",
+      "js": "if (!/^[a-zA-Z0-9]+$/.test(input)) {\n  throw new Error('Invalid input');\n}"
+    },
+    "bad_practice_example": {
+      "go": "fmt.Fprintf(w, input)",
+      "py": "print(input)",
+      "js": "document.write(input);"
+    }
+  },
+  {
+    "cwe": "CWE-829",
+    "good_practice_example": {
+      "go": "select {\ncase <-done:\n  return\ncase <-timeout.C:\n  return fmt.Errorf(\"Timeout\")\n}",
+      "py": "try:\n  process()\nexcept TimeoutError:\n  raise",
+      "js": "const timeoutId = setTimeout(() => {\n  throw new Error('Timeout');\n}, 5000);"
+    },
+    "bad_practice_example": {
+      "go": "for {\n  process()\n}",
+      "py": "while True:\n  process()",
+      "js": "while (true) {\n  process();\n}"
+    }
+  },
+  {
+    "cwe": "CWE-434",
+    "good_practice_example": {
+      "go": "filename := filepath.Base(uploadedFile.Filename)\nif !isValidFileName(filename) {\n  return fmt.Errorf(\"Invalid file name\")\n}",
+      "py": "filename = os.path.basename(uploaded_file.filename)\nif not is_valid_filename(filename):\n  raise ValueError('Invalid file name')",
+      "js": "const filename = path.basename(uploadedFile.name);\nif (!isValidFilename(filename)) {\n  throw new Error('Invalid file name');\n}"
+    },
+    "bad_practice_example": {
+      "go": "filename := uploadedFile.Filename",
+      "py": "filename = uploaded_file.filename",
+      "js": "const filename = uploadedFile.name;"
+    }
+  },
+  {
+    "cwe": "CWE-494",
+    "good_practice_example": {
+      "go": "data, err := http.Get(safeURL)\nif err != nil {\n  log.Fatal(err)\n}",
+      "py": "response = requests.get(safe_url)\nif response.status_code != 200:\n  raise ValueError('Invalid response')",
+      "js": "fetch(safeURL).then(response => {\n  if (!response.ok) throw new Error('Invalid response');\n});"
+    },
+    "bad_practice_example": {
+      "go": "data, err := http.Get(userInputURL)",
+      "py": "response = requests.get(user_input_url)",
+      "js": "fetch(userInputURL).then(response => response.text());"
+    }
+  },
+  {
+    "cwe": "CWE-611",
+    "good_practice_example": {
+      "go": "decoder := xml.NewDecoder(r.Body)\ndecoder.Strict = true",
+      "py": "xml_parser = etree.XMLParser(resolve_entities=False)",
+      "js": "const parser = new DOMParser();\nconst doc = parser.parseFromString(xmlString, 'text/xml');"
+    },
+    "bad_practice_example": {
+      "go": "decoder := xml.NewDecoder(r.Body)",
+      "py": "tree = etree.parse(file_object)",
+      "js": "const doc = new DOMParser().parseFromString(xmlString, 'text/xml');"
+    }
+  },
+  {
+    "cwe": "CWE-918",
+    "good_practice_example": {
+      "go": "safeURL := sanitizeURL(inputURL)\nhttp.Get(safeURL)",
+      "py": "safe_url = sanitize_url(input_url)\nrequests.get(safe_url)",
+      "js": "const safeURL = sanitizeURL(inputURL);\nfetch(safeURL);"
+    },
+    "bad_practice_example": {
+      "go": "http.Get(inputURL)",
+      "py": "requests.get(input_url)",
+      "js": "fetch(inputURL);"
+    }
+  },
+  {
+    "cwe": "CWE-862",
+    "good_practice_example": {
+      "go": "if user.IsAuthorized() {\n  accessResource()\n}",
+      "py": "if user.is_authorized():\n  access_resource()",
+      "js": "if (user.isAuthorized()) {\n  accessResource();\n}"
+    },
+    "bad_practice_example": {
+      "go": "accessResource()",
+      "py": "access_resource()",
+      "js": "accessResource();"
+    }
+  },
+  {
+    "cwe": "CWE-22",
+    "good_practice_example": {
+      "go": "filepath := filepath.Clean(userInputPath)\nif !isValidPath(filepath) {\n  return fmt.Errorf(\"Invalid path\")\n}",
+      "py": "safe_path = os.path.abspath(user_input_path)\nif not is_valid_path(safe_path):\n  raise ValueError('Invalid path')",
+      "js": "const safePath = path.normalize(userInputPath);\nif (!isValidPath(safePath)) {\n  throw new Error('Invalid path');\n}"
+    },
+    "bad_practice_example": {
+      "go": "filepath := userInputPath",
+      "py": "unsafe_path = user_input_path",
+      "js": "const unsafePath = userInputPath;"
+    }
+  },
+  {
+    "cwe": "CWE-73",
+    "good_practice_example": {
+      "go": "cmd := exec.Command(\"ls\", \"-l\")\noutput, err := cmd.CombinedOutput()\nif err != nil {\n  log.Fatal(err)\n}",
+      "py": "output = subprocess.check_output(['ls', '-l'])\nif output is None:\n  raise RuntimeError('Command failed')",
+      "js": "const { exec } = require('child_process');\nexec('ls -l', (error, stdout, stderr) => {\n  if (error) {\n    console.error(`exec error: ${error}`);\n  }\n});"
+    },
+    "bad_practice_example": {
+      "go": "cmd := exec.Command(userInput)\ncmd.Run()",
+      "py": "os.system(user_input)",
+      "js": "eval(userInput);"
+    }
+  },
+  {
+    "cwe": "CWE-552",
+    "good_practice_example": {
+      "go": "http.HandleFunc(\"/upload\", func(w http.ResponseWriter, r *http.Request) {\n  r.ParseMultipartForm(10 << 20)\n  // handle file upload safely\n})",
+      "py": "@app.route('/upload', methods=['POST'])\ndef upload_file():\n  file = request.files['file']\n  # handle file upload safely",
+      "js": "app.post('/upload', (req, res) => {\n  const file = req.files.file;\n  // handle file upload safely\n});"
+    },
+    "bad_practice_example": {
+      "go": "http.HandleFunc(\"/upload\", func(w http.ResponseWriter, r *http.Request) {\n  // handle file upload unsafely\n})",
+      "py": "@app.route('/upload', methods=['POST'])\ndef upload_file():\n  file = request.files['file']\n  # handle file upload unsafely",
+      "js": "app.post('/upload', (req, res) => {\n  // handle file upload unsafely\n});"
+    }
+  },
+  {
+    "cwe": "CWE-119",
+    "good_practice_example": {
+      "go": "buffer := make([]byte, 1024)\nfile, err := os.Open(\"file.txt\")\nif err != nil {\n  log.Fatal(err)\n}\ndefer file.Close()\nfile.Read(buffer)",
+      "py": "with open('file.txt', 'rb') as f:\n  data = f.read(1024)",
+      "js": "const fs = require('fs');\nfs.readFile('file.txt', (err, data) => {\n  if (err) throw err;\n});"
+    },
+    "bad_practice_example": {
+      "go": "buffer := make([]byte, 0)\nfile, _ := os.Open(\"file.txt\")\nfile.Read(buffer)",
+      "py": "data = open('file.txt', 'rb').read()",
+      "js": "const data = fs.readFileSync('file.txt');"
+    }
+  },
+  {
+    "cwe": "CWE-416",
+    "good_practice_example": {
+      "go": "var mu sync.Mutex\nmu.Lock()\n// critical section\nmu.Unlock()",
+      "py": "with threading.Lock():\n  # critical section",
+      "js": "const mutex = new Mutex();\nmutex.lock(() => {\n  // critical section\n});"
+    },
+    "bad_practice_example": {
+      "go": "// no locking\n// critical section",
+      "py": "# no locking\n# critical section",
+      "js": "// no locking\n// critical section"
+    }
+  },
+  {
+    "cwe": "CWE-476",
+    "good_practice_example": {
+      "go": "type MyStruct struct {\n  mu sync.Mutex\n}\nfunc (m *MyStruct) SafeMethod() {\n  m.mu.Lock()\n  defer m.mu.Unlock()\n  // safe operation\n}",
+      "py": "class MyClass:\n  def __init__(self):\n    self.lock = threading.Lock()\n  def safe_method(self):\n    with self.lock:\n      # safe operation",
+      "js": "class MyClass {\n  constructor() {\n    this.lock = new Mutex();\n  }\n  async safeMethod() {\n    await this.lock.acquire();\n    // safe operation\n  }\n}"
+    },
+    "bad_practice_example": {
+      "go": "type MyStruct struct {}\nfunc (m *MyStruct) UnsafeMethod() {\n  // unsafe operation\n}",
+      "py": "class MyClass:\n  def unsafe_method(self):\n    # unsafe operation",
+      "js": "class MyClass {\n  unsafeMethod() {\n    // unsafe operation\n  }\n}"
+    }
+  },
+  {
+    "cwe": "CWE-787",
+    "good_practice_example": {
+      "go": "slice := make([]int, 10)\ncopy(slice, sourceSlice)",
+      "py": "safe_list = source_list[:10]",
+      "js": "const safeArray = sourceArray.slice(0, 10);"
+    },
+    "bad_practice_example": {
+      "go": "slice := sourceSlice[:]",
+      "py": "unsafe_list = source_list",
+      "js": "const unsafeArray = sourceArray;"
+    }
+  },
+  {
+    "cwe": "CWE-259",
+    "good_practice_example": {
+      "go": "os.Setenv(\"MY_ENV_VAR\", \"value\")",
+      "py": "os.environ['MY_ENV_VAR'] = 'value'",
+      "js": "process.env.MY_ENV_VAR = 'value';"
+    },
+    "bad_practice_example": {
+      "go": "os.Setenv(\"MY_ENV_VAR\", userInput)",
+      "py": "os.environ['MY_ENV_VAR'] = user_input",
+      "js": "process.env.MY_ENV_VAR = userInput;"
+    }
+  },
+  {
+    "cwe": "CWE-798",
+    "good_practice_example": {
+      "go": "if !isVulnerable(version) {\n  // safe operation\n}",
+      "py": "if not is_vulnerable(version):\n  # safe operation",
+      "js": "if (!isVulnerable(version)) {\n  // safe operation\n}"
+    },
+    "bad_practice_example": {
+      "go": "// vulnerable code\n// safe operation",
+      "py": "# vulnerable code\n# safe operation",
+      "js": "// vulnerable code\n// safe operation"
+    }
+  },
+  {
+    "cwe": "CWE-352",
+    "good_practice_example": {
+      "go": "token := generateCSRFToken(userID)\nhttp.SetCookie(w, &http.Cookie{Name: \"csrf_token\", Value: token})",
+      "py": "csrf_token = generate_csrf_token(user.id)\nresponse.set_cookie('csrf_token', csrf_token)",
+      "js": "const csrfToken = generateCSRFToken(user.id);\ndocument.cookie = `csrf_token=${csrfToken}`;"
+    },
+    "bad_practice_example": {
+      "go": "http.SetCookie(w, &http.Cookie{Name: \"csrf_token\", Value: \"\"})",
+      "py": "response.set_cookie('csrf_token', '')",
+      "js": "document.cookie = 'csrf_token=';"
+    }
+  },
+  {
+    "cwe": "CWE-601",
+    "good_practice_example": {
+      "go": "uri, err := url.ParseRequestURI(userInput)\nif err != nil {\n  log.Fatal(err)\n}",
+      "py": "uri = urlparse(user_input)\nif not uri.scheme or not uri.netloc:\n  raise ValueError('Invalid URI')",
+      "js": "const url = new URL(userInput);\nif (!url.protocol || !url.hostname) throw new Error('Invalid URI');"
+    },
+    "bad_practice_example": {
+      "go": "url.Parse(userInput)",
+      "py": "urlparse(user_input)",
+      "js": "const url = new URL(userInput);"
+    }
+  },
+  {
+    "cwe": "CWE-287",
+    "good_practice_example": {
+      "go": "if user.IsAuthenticated() {\n  accessProtectedResource()\n}",
+      "py": "if user.is_authenticated:\n  access_protected_resource()",
+      "js": "if (user.isAuthenticated()) {\n  accessProtectedResource();\n}"
+    },
+    "bad_practice_example": {
+      "go": "accessProtectedResource()",
+      "py": "access_protected_resource()",
+      "js": "accessProtectedResource();"
+    }
+  },
+  {
+    "cwe": "CWE-306",
+    "good_practice_example": {
+      "go": "if user.HasRole(\"admin\") {\n  accessAdminDashboard()\n}",
+      "py": "if user.has_role('admin'):\n  access_admin_dashboard()",
+      "js": "if (user.hasRole('admin')) {\n  accessAdminDashboard();\n}"
+    },
+    "bad_practice_example": {
+      "go": "accessAdminDashboard()",
+      "py": "access_admin_dashboard()",
+      "js": "accessAdminDashboard();"
+    }
+  },
+  {
+    "cwe": "CWE-302",
+    "good_practice_example": {
+      "go": "if inputPassword == storedHashedPassword {\n  grantAccess()\n}",
+      "py": "if check_password(input_password, stored_hashed_password):\n  grant_access()",
+      "js": "if (bcrypt.compareSync(inputPassword, storedHashedPassword)) {\n  grantAccess();\n}"
+    },
+    "bad_practice_example": {
+      "go": "if inputPassword == storedPassword {\n  grantAccess()\n}",
+      "py": "if input_password == stored_password:\n  grant_access()",
+      "js": "if (inputPassword === storedPassword) {\n  grantAccess();\n}"
+    }
+  },
+  {
+    "cwe": "CWE-269",
+    "good_practice_example": {
+      "go": "if user.HasPermission(\"edit\") {\n  editResource()\n}",
+      "py": "if user.has_permission('edit'):\n  edit_resource()",
+      "js": "if (user.hasPermission('edit')) {\n  editResource();\n}"
+    },
+    "bad_practice_example": {
+      "go": "editResource()",
+      "py": "edit_resource()",
+      "js": "editResource();"
+    }
+  },
+  {
+    "cwe": "CWE-284",
+    "good_practice_example": {
+      "go": "if user.IsAuthorized() {\n  deleteResource()\n}",
+      "py": "if user.is_authorized():\n  delete_resource()",
+      "js": "if (user.isAuthorized()) {\n  deleteResource();\n}"
+    },
+    "bad_practice_example": {
+      "go": "deleteResource()",
+      "py": "delete_resource()",
+      "js": "deleteResource();"
+    }
+  },
+  {
+    "cwe": "CWE-922",
+    "good_practice_example": {
+      "go": "trustedInput := sanitizeInput(userInput)\nprocess(trustedInput)",
+      "py": "trusted_input = sanitize_input(user_input)\nprocess(trusted_input)",
+      "js": "const trustedInput = sanitizeInput(userInput);\nprocess(trustedInput);"
+    },
+    "bad_practice_example": {
+      "go": "process(userInput)",
+      "py": "process(user_input)",
+      "js": "process(userInput);"
+    }
+  },
+  {
+    "cwe": "CWE-384",
+    "good_practice_example": {
+      "go": "session.Values[\"user\"] = user\nsession.Save(r, w)",
+      "py": "session['user'] = user\nsession.modified = True",
+      "js": "req.session.user = user;\nreq.session.save();"
+    },
+    "bad_practice_example": {
+      "go": "session.Values[\"user\"] = userInput",
+      "py": "session['user'] = user_input",
+      "js": "req.session.user = userInput;"
+    }
+  },
+  {
+    "cwe": "CWE-613",
+    "good_practice_example": {
+      "go": "timeout := time.After(5 * time.Second)\nselect {\ncase result := <-resultChan:\n  process(result)\ncase <-timeout:\n  return fmt.Errorf(\"Timeout\")\n}",
+      "py": "result = wait_for_result(timeout=5)\nif result is None:\n  raise TimeoutError('Timeout')",
+      "js": "const timeoutId = setTimeout(() => {\n  throw new Error('Timeout');\n}, 5000);\nresult.then(data => {\n  clearTimeout(timeoutId);\n});"
+    },
+    "bad_practice_example": {
+      "go": "process(resultChan)",
+      "py": "process(result)",
+      "js": "process(result);"
+    }
+  },
+  {
+    "cwe": "CWE-327",
+    "good_practice_example": {
+      "go": "hash := sha256.Sum256([]byte(password))\nreturn hex.EncodeToString(hash[:])",
+      "py": "hashed_password = hashlib.sha256(password.encode()).hexdigest()",
+      "js": "const hash = crypto.createHash('sha256').update(password).digest('hex');"
+    },
+    "bad_practice_example": {
+      "go": "return password",
+      "py": "return password",
+      "js": "return password;"
+    }
+  },
+  {
+    "cwe": "CWE-330",
+    "good_practice_example": {
+      "go": "if err := validateInput(input); err != nil {\n  return fmt.Errorf(\"Invalid input\")\n}",
+      "py": "if not validate_input(input):\n  raise ValueError('Invalid input')",
+      "js": "if (!validateInput(input)) {\n  throw new Error('Invalid input');\n}"
+    },
+    "bad_practice_example": {
+      "go": "validateInput(input)",
+      "py": "validate_input(input)",
+      "js": "validateInput(input);"
+    }
+  },
+  {
+    "cwe": "CWE-338",
+    "good_practice_example": {
+      "go": "if isValidUser(user) {\n  // proceed\n}",
+      "py": "if is_valid_user(user):\n  # proceed",
+      "js": "if (isValidUser(user)) {\n  // proceed\n}"
+    },
+    "bad_practice_example": {
+      "go": "// proceed without validation\n",
+      "py": "# proceed without validation\n",
+      "js": "// proceed without validation\n"
+    }
+  }
+]

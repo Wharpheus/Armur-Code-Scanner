@@ -1,0 +1,63 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Output of the go command
+bin/
+build/
+dist/
+
+# Dependency directories (contains vendored dependencies)
+vendor/
+
+# Go environment files
+.env
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# shared_tmp
+shared_tmp/
+
+# Logs and database files
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+
+# Coverage files
+*.cover
+*.coverage
+
+# Test data
+*.testdata
+*_test.go
+
+# Miscellaneous
+*.lock
+*.key
+*.pem
+
+# Docker files
+docker-compose.override.yml
