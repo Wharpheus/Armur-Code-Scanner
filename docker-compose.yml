@@ -16,21 +16,11 @@ services:
     depends_on:
       - redis_service
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1024M
   redis_service:
     image: "redis:alpine"
     container_name: redis_service
     ports:
       - "${REDIS_PORT:-6379}:6379"
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
 volumes:
   shared_tmp:
