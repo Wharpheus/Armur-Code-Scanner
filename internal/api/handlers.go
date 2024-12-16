@@ -37,7 +37,7 @@ func ScanHandler(c *gin.Context) {
 	// Enqueue the scan task
 	taskID, err := tasks.EnqueueScanTask(utils.SimpleScan, request.RepositoryURL, request.Language)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task", "details": err.Error()})
 		return
 	}
 
@@ -64,7 +64,7 @@ func AdvancedScanResult(c *gin.Context) {
 
 	taskID, err := tasks.EnqueueScanTask(utils.AdvancedScan, request.RepositoryURL, request.Language)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task", "details": err.Error()})
 		return
 	}
 
@@ -81,20 +81,20 @@ func ScanFile(c *gin.Context) {
 	baseDir := "/armur/repos"
 	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
 			return
 		}
 	}
 
 	tempDir, err := os.MkdirTemp(baseDir, "scan")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create temp directory"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create temp directory", "details": err.Error()})
 		return
 	}
 
 	filePath := filepath.Join(tempDir, file.Filename)
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file", "details": err.Error()})
 		return
 	}
 
@@ -102,13 +102,12 @@ func ScanFile(c *gin.Context) {
 
 	taskID, err := tasks.EnqueueScanTask(utils.FileScan, filePath, filePath)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task", "details": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"task_id":    taskID,
-		"status_url": fmt.Sprintf("%s/task_status/%s", c.Request.Host, taskID),
 	})
 }
 

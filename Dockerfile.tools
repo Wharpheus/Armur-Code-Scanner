@@ -1,0 +1,19 @@
+# --- Custom Base Image with all tools ---
+    FROM golang:1.23.0-alpine
+
+    WORKDIR /app
+    
+    # Install gosec
+    RUN go install github.com/securego/gosec/v2/cmd/gosec@v2.20.0
+    
+    # Install golint
+    RUN go install golang.org/x/lint/golint@latest
+    
+    # Install staticcheck
+    RUN go install honnef.co/go/tools/cmd/staticcheck@latest
+    
+    ## Install gocyclo
+    RUN go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+    
+    # Set the PATH
+    ENV PATH="/root/go/bin:$PATH"
