@@ -33,42 +33,41 @@ Armur Code Scanner detects the following types of vulnerabilities and coding wea
 | CWE-400  | Uncontrolled Resource Consumption ('Resource Exhaustion')                                       |
 | CWE-287  | Improper Authentication                                                                              |
 | CWE-306  | Missing Authentication for Critical Function                                                  |
-| CWE-302  |  Improper Authorization  |
-| CWE-269 |  Improper Privilege Management  |
-| CWE-284 | Improper Access Control  |
-| CWE-922 |  Insecure Storage of Sensitive Information  |
+| CWE-302  | Improper Authorization  |
+| CWE-269  | Improper Privilege Management  |
+| CWE-284  | Improper Access Control  |
+| CWE-922  | Insecure Storage of Sensitive Information  |
 | CWE-384  | Session Fixation |
-| CWE-613 |  Insufficient Session Expiration |
-| CWE-327 | Use of a Broken or Risky Cryptographic Algorithm |
-| CWE-330 | Use of Insufficiently Random Values |
-| CWE-338 | Use of Cryptographically Weak PRNG |
-| CWE-325 | Missing Required Cryptographic Step |
-| CWE-200 |  Exposure of Sensitive Information to an Unauthorized Actor  |
-| CWE-201  |  Insertion of Sensitive Information into Sent Data    |
-| CWE-598   |  Information Exposure Through Query Strings in URL    |
-| CWE-209 |   Generation of Error Message Containing Sensitive Information   |
-| CWE-310  |  Cryptographic Issues    |
+| CWE-613  | Insufficient Session Expiration |
+| CWE-327  | Use of a Broken or Risky Cryptographic Algorithm |
+| CWE-330  | Use of Insufficiently Random Values |
+| CWE-338  | Use of Cryptographically Weak PRNG |
+| CWE-325  | Missing Required Cryptographic Step |
+| CWE-200  | Exposure of Sensitive Information to an Unauthorized Actor  |
+| CWE-201  | Insertion of Sensitive Information into Sent Data    |
+| CWE-598  | Information Exposure Through Query Strings in URL    |
+| CWE-209  | Generation of Error Message Containing Sensitive Information   |
+| CWE-310  | Cryptographic Issues    |
 | CWE-502  | Deserialization of Untrusted Data |
 | CWE-917  | Improper Neutralization of Special Elements used in an Expression Language Statement ('Expression Language Injection') |
 | CWE-829  | Inclusion of Functionality from Untrusted Control Sphere |
 | CWE-434  | Unrestricted Upload of File with Dangerous Type |
-| CWE-494 |  Download of Code Without Integrity Check  |
-| CWE-611 | Improper Restriction of XML External Entity Reference |
-| CWE-918 | Server-Side Request Forgery (SSRF) |
-| CWE-862 | Missing Authorization |
-| CWE-22 | Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')|
-| CWE-73 | External Control of File Name or Path|
-| CWE-552 | Unsafe Handling of File Uploads |
-| CWE-119 | Improper Restriction of Operations within the Bounds of a Memory Buffer |
-| CWE-416 | Use After Free |
-| CWE-476 | NULL Pointer Dereference |
-| CWE-787 |  Out-of-bounds Write |
-| CWE-259 | Use of Hard-coded Password |
-| CWE-798 | Use of Hard-coded Credentials |
-| CWE-352 | Cross-Site Request Forgery (CSRF) |
-| CWE-601 | URL Redirection to Untrusted Site ('Open Redirect') |
-
-| AND MANY MORE |
+| CWE-494  | Download of Code Without Integrity Check  |
+| CWE-611  | Improper Restriction of XML External Entity Reference |
+| CWE-918  | Server-Side Request Forgery (SSRF) |
+| CWE-862  | Missing Authorization |
+| CWE-22   | Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')|
+| CWE-73   | External Control of File Name or Path|
+| CWE-552  | Unsafe Handling of File Uploads |
+| CWE-119  | Improper Restriction of Operations within the Bounds of a Memory Buffer |
+| CWE-416  | Use After Free |
+| CWE-476  | NULL Pointer Dereference |
+| CWE-787  | Out-of-bounds Write |
+| CWE-259  | Use of Hard-coded Password |
+| CWE-798  | Use of Hard-coded Credentials |
+| CWE-352  | Cross-Site Request Forgery (CSRF) |
+| CWE-601  | URL Redirection to Untrusted Site ('Open Redirect') |
+| MANY MORE |
 
 ### Additional Vulnerability Information
 
