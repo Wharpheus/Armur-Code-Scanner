@@ -1,0 +1,144 @@
+{
+	"info": {
+		"_postman_id": "d8f33415-1017-40da-93f7-9742cd68a64b",
+		"name": "armur-codescan",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21362031"
+	},
+	"item": [
+		{
+			"name": "Scan repo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"repository_url\": \"https://github.com/Armur-Ai/Armur-Code-Scanner\",\r\n  \"language\": \"go\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:4500/api/v1/scan/repo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4500",
+					"path": [
+						"api",
+						"v1",
+						"scan",
+						"repo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Advance Scan repo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"repository_url\": \"https://github.com/Armur-Ai/Armur-Code-Scanner\",\r\n  \"language\": \"go\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:4500/api/v1/advanced-scan/repo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4500",
+					"path": [
+						"api",
+						"v1",
+						"advanced-scan",
+						"repo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Scan file",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/admin/Desktop/Armur-Code-Scanner/internal/worker/worker.go"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:4500/api/v1/scan/file",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4500",
+					"path": [
+						"api",
+						"v1",
+						"scan",
+						"file"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get report for file/repo",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4500/api/v1/status/INSERT-ID-HERE",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4500",
+					"path": [
+						"api",
+						"v1",
+						"status",
+						"INSERT-ID-HERE"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
