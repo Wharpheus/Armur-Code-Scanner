@@ -1,0 +1,256 @@
+basePath: /
+definitions:
+  api.ScanRequest:
+    properties:
+      language:
+        example: go
+        type: string
+      repository_url:
+        example: https://github.com/Armur-Ai/Armur-Code-Scanner
+        type: string
+    type: object
+  utils.ReportItem:
+    properties:
+      column:
+        type: integer
+      confidence:
+        type: string
+      file:
+        type: string
+      line:
+        type: integer
+      message:
+        type: string
+      owasp:
+        type: string
+      severity:
+        type: string
+      suggested_remediation:
+        type: string
+    type: object
+  utils.SANSReportItem:
+    properties:
+      column:
+        type: integer
+      confidence:
+        type: string
+      cwe:
+        type: string
+      file:
+        type: string
+      line:
+        type: integer
+      message:
+        type: string
+      severity:
+        type: string
+      suggested_remediation:
+        type: string
+    type: object
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a code scanner service API.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Armur Code Scanner API
+  version: "1.0"
+paths:
+  /api/v1/advanced-scan/repo:
+    post:
+      consumes:
+      - application/json
+      description: Enqueues an advanced scan task for a given repository URL and language.
+      parameters:
+      - description: Request body containing repository URL and language
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.ScanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully enqueued task
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to enqueue scan task
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Trigger a code scan on a repository with advanced scans.
+      tags:
+      - scan
+  /api/v1/reports/owasp/{task_id}:
+    get:
+      description: Generates OWASP report from a specific task result using task ID.
+      parameters:
+      - description: Task ID
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully generated OWASP report
+          schema:
+            items:
+              $ref: '#/definitions/utils.ReportItem'
+            type: array
+        "404":
+          description: Task result not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to fetch task result
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get OWASP report for a task result.
+      tags:
+      - report
+  /api/v1/reports/sans/{task_id}:
+    get:
+      description: Generates SANS report from a specific task result using task ID.
+      parameters:
+      - description: Task ID
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully generated SANS report
+          schema:
+            items:
+              $ref: '#/definitions/utils.SANSReportItem'
+            type: array
+        "404":
+          description: Task result not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to fetch task result
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get SANS report for a task result.
+      tags:
+      - report
+  /api/v1/scan/file:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Enqueues a scan task for a given file.
+      parameters:
+      - description: File to be scanned
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Successfully enqueued task
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: No file part or no selected file
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to create temp directory or Failed to save file
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Trigger a code scan on file.
+      tags:
+      - scan
+  /api/v1/scan/repo:
+    post:
+      consumes:
+      - application/json
+      description: Enqueues a scan task for a given repository URL and language.
+      parameters:
+      - description: Request body containing repository URL and language
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.ScanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully enqueued task
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to enqueue scan task
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Trigger a code scan on a repository.
+      tags:
+      - scan
+  /api/v1/status/{task_id}:
+    get:
+      description: Get the status and results of a scan task by its ID.
+      parameters:
+      - description: Task ID
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved task result
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get task status and results.
+      tags:
+      - scan
+swagger: "2.0"

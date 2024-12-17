@@ -1,3 +1,4 @@
+// internal/api/handlers.go
 package api
 
 import (
@@ -11,10 +12,21 @@ import (
 )
 
 type ScanRequest struct {
-	RepositoryURL string `json:"repository_url"`
-	Language      string `json:"language"`
+	RepositoryURL string `json:"repository_url" example:"https://github.com/Armur-Ai/Armur-Code-Scanner"`
+	Language      string `json:"language" example:"go"`
 }
 
+// ScanHandler godoc
+// @Summary Trigger a code scan on a repository.
+// @Description Enqueues a scan task for a given repository URL and language.
+// @Tags scan
+// @Accept json
+// @Produce json
+// @Param request body ScanRequest true "Request body containing repository URL and language"
+// @Success 200 {object} map[string]string  "Successfully enqueued task"
+// @Failure 400 {object} map[string]string "Invalid request parameters"
+// @Failure 500 {object} map[string]string "Failed to enqueue scan task"
+// @Router /api/v1/scan/repo [post]
 func ScanHandler(c *gin.Context) {
 	var request ScanRequest
 
@@ -45,6 +57,17 @@ func ScanHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"task_id": taskID})
 }
 
+// AdvancedScanResult godoc
+// @Summary Trigger a code scan on a repository with advanced scans.
+// @Description Enqueues an advanced scan task for a given repository URL and language.
+// @Tags scan
+// @Accept json
+// @Produce json
+// @Param request body ScanRequest true "Request body containing repository URL and language"
+// @Success 200 {object} map[string]string "Successfully enqueued task"
+// @Failure 400 {object} map[string]string "Invalid request parameters"
+// @Failure 500 {object} map[string]string "Failed to enqueue scan task"
+// @Router /api/v1/advanced-scan/repo [post]
 func AdvancedScanResult(c *gin.Context) {
 	var request ScanRequest
 
@@ -71,6 +94,17 @@ func AdvancedScanResult(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"task_id": taskID})
 }
 
+// ScanFile godoc
+// @Summary Trigger a code scan on file.
+// @Description Enqueues a scan task for a given file.
+// @Tags scan
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "File to be scanned"
+// @Success 202 {object} map[string]string "Successfully enqueued task"
+// @Failure 400 {object} map[string]string "No file part or no selected file"
+// @Failure 500 {object} map[string]string "Failed to create temp directory or Failed to save file"
+// @Router /api/v1/scan/file [post]
 func ScanFile(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil || file.Filename == "" {
@@ -111,6 +145,14 @@ func ScanFile(c *gin.Context) {
 	})
 }
 
+// TaskStatus godoc
+// @Summary Get task status and results.
+// @Description Get the status and results of a scan task by its ID.
+// @Tags scan
+// @Produce json
+// @Param task_id path string true "Task ID"
+// @Success 200 {object} map[string]interface{} "Successfully retrieved task result"
+// @Router /api/v1/status/{task_id} [get]
 func TaskStatus(c *gin.Context) {
 	taskID := c.Param("task_id")
 
@@ -130,6 +172,16 @@ func TaskStatus(c *gin.Context) {
 	})
 }
 
+// TaskOwasp godoc
+// @Summary Get OWASP report for a task result.
+// @Description Generates OWASP report from a specific task result using task ID.
+// @Tags report
+// @Produce json
+// @Param task_id path string true "Task ID"
+// @Success 200 {object} []utils.ReportItem "Successfully generated OWASP report"
+// @Failure 404 {object} map[string]string "Task result not found"
+// @Failure 500 {object} map[string]string "Failed to fetch task result"
+// @Router /api/v1/reports/owasp/{task_id} [get]
 func TaskOwasp(c *gin.Context) {
 	taskID := c.Param("task_id")
 
@@ -154,6 +206,16 @@ func TaskOwasp(c *gin.Context) {
 	c.JSON(http.StatusOK, report)
 }
 
+// TaskSans godoc
+// @Summary Get SANS report for a task result.
+// @Description Generates SANS report from a specific task result using task ID.
+// @Tags report
+// @Produce json
+// @Param task_id path string true "Task ID"
+// @Success 200 {object} []utils.SANSReportItem "Successfully generated SANS report"
+// @Failure 404 {object} map[string]string "Task result not found"
+// @Failure 500 {object} map[string]string "Failed to fetch task result"
+// @Router /api/v1/reports/sans/{task_id} [get]
 func TaskSans(c *gin.Context) {
 	taskID := c.Param("task_id")
 

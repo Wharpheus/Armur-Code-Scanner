@@ -1,3 +1,4 @@
+// cmd/server/main.go
 package main
 
 import (
@@ -8,8 +9,22 @@ import (
 	"github.com/hibiken/asynq"
 	"log"
 	"os"
+
+	_ "armur-codescanner/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title Armur Code Scanner API
+// @version 1.0
+// @description This is a code scanner service API.
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+// @BasePath /
 func main() {
 	router := gin.Default()
 	go func() {
@@ -18,6 +33,10 @@ func main() {
 		}
 	}()
 	api.RegisterRoutes(router)
+
+	// Swagger route
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	port := os.Getenv("APP_PORT")
 	if err := router.Run(":" + port); err != nil {
 		log.Fatal("Server failed to start: ", err)
