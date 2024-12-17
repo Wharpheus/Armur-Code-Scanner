@@ -1,26 +1,28 @@
 # Armur Code Scanner
 
-This is the official repository for the Armur static scanner built with GO. It uses the best open source tools for static scanning and combines them in a pipeline. It works amazingly for languages like GO, Rust and Python.
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This was built after talking to hundreds of Red Teamers, Bug Bounty hunters, security researchers and most importantly, developers to build a solution that automates a huge part of the work required to find security issues and vulnerabilities in code.
+This is the official repository for the Armur static code scanner, built with Go. It leverages the best open-source static analysis tools, combining them into a seamless pipeline for identifying security vulnerabilities and code quality issues. This tool is designed to be efficient and effective, particularly for languages like Go, Python, and JavaScript.
 
-Visit armur.ai to use the cloud based version of this same tool.
+This project was born from conversations with hundreds of red teamers, bug bounty hunters, security researchers, and developers. It aims to automate a significant portion of the work involved in finding security flaws in code.
 
-On the Armur platform, you can use our proprietary AI tool that uses Agents powered by LLMs for security tooling that help provide extremely detailed reports on code security for GO, Python and Rust code and smart contracts code for Solidity, Move and Solana (Rust) - on blockchains
+Visit [armur.ai](https://armur.ai) to use the cloud-based version of this tool, which includes proprietary AI agents powered by LLMs to provide extremely detailed code security reports for Go, Python, JavaScript, and smart contract code for Solidity, Move, and Solana (Rust).
 
-## Features
+## Key Features
 
-*   **Multi-Language Support:** Supports scanning of Go, Python, and JavaScript code.
-*   **Vulnerability Detection:** Identifies a wide range of vulnerabilities using static analysis tools.
-*   **Code Quality Checks:** Performs checks for code style issues and complex functions.
-*   **OWASP and SANS Reports:** Generates reports based on OWASP and SANS guidelines.
-*   **Advanced Scans:** Detects duplicate code, secrets, infrastructure issues, and SCA issues.
-*   **File Scan Support:** Ability to scan individual files for quick analysis.
-*   **Task Management:** Uses Asynq for background task processing, and Redis as a task result store.
+*   **Multi-Language Support**: Scans Go, Python, and JavaScript code.
+*   **Comprehensive Vulnerability Detection**: Identifies a broad spectrum of vulnerabilities using various static analysis tools.
+*   **Code Quality Analysis**: Performs checks for code style issues, complex functions, and dead code.
+*   **OWASP and SANS Compliance**: Generates reports based on OWASP and SANS guidelines.
+*   **Advanced Security Scans**: Detects duplicate code, exposed secrets, infrastructure misconfigurations, and SCA vulnerabilities.
+*   **Individual File Scanning**: Allows for quick analysis of individual source files.
+*   **Asynchronous Task Processing**: Leverages Asynq for background task processing and Redis for result storage.
+*   **API Documentation**: Comprehensive API documentation using Swagger/OpenAPI.
+*   **Easy Development**: Makefile provided for easy building, testing, and running.
 
 ## Supported Vulnerabilities
 
-Armur Code Scanner detects the following types of vulnerabilities and coding weaknesses, based on the Common Weakness Enumeration (CWE):
+Armur Code Scanner is capable of detecting the following types of vulnerabilities and coding weaknesses, based on the Common Weakness Enumeration (CWE):
 
 | CWE ID   | Vulnerability Name                                                                                   |
 | :------- | :--------------------------------------------------------------------------------------------------- |
@@ -67,65 +69,72 @@ Armur Code Scanner detects the following types of vulnerabilities and coding wea
 | CWE-798  | Use of Hard-coded Credentials |
 | CWE-352  | Cross-Site Request Forgery (CSRF) |
 | CWE-601  | URL Redirection to Untrusted Site ('Open Redirect') |
-| MANY MORE |
+| MANY MORE   |
 
 ### Additional Vulnerability Information
 
-In addition to these, Armur Code Scanner also leverages tools such as:
+In addition to these, Armur Code Scanner also leverages the power of the following open source tools:
 
 *   **Semgrep:** For detecting various coding patterns and security vulnerabilities.
 *   **Gosec:** For Go-specific security issues.
 *   **Bandit:** For Python-specific security vulnerabilities.
 *   **ESLint:** For detecting JavaScript security issues and code quality problems.
-*   **OSV-Scanner:** For identifying Software Composition Analysis issues.
+*   **OSV-Scanner:** For identifying Software Composition Analysis (SCA) issues.
 *   **Trufflehog:** For identifying exposed secrets in your codebase.
 *   **Checkov:** For identifying Infrastructure as code misconfigurations.
 *   **Trivy:** For identifying infrastructure and container vulnerabilities, and secrets.
 *   **JSCPD:** For finding duplicated code.
 *   **Pydocstyle, Radon, Pylint:** For Python specific code quality issues.
-*  **Golint, Govet, Staticcheck, Gocyclo:** For GO specific code quality issues.
-* **Vulture:** For identifying dead code in python projects.
+*   **Golint, Govet, Staticcheck, Gocyclo:** For GO specific code quality issues.
+*   **Vulture:** For identifying dead code in Python projects.
 
 ## How Armur Code Scanner Works
 
-1.  **API Request:** A scan is triggered via an API request which can be a POST request, containing a git repository URL or a file.
-2.  **Task Enqueue:** The API enqueues a scan task using Asynq, with the information about repository URL, language, and scan type in the task payload, and task id.
-3. **Repository Cloning:** If the payload contains repo url, it is cloned into a temporary directory.
-4. **Scan Execution:** The Asynq worker processes these tasks. Based on task type it will run either a simple scan or an advanced scan, on either the repository directory or the file path.
-5.  **Scanning:** The tool will then use appropriate static analysis tools, such as Semgrep, gosec, bandit, eslint etc., and generate scan results.
-6.  **Result Storage:** Scan results are stored in a Redis database with a TTL of 24 hours, using task id as a key.
-7.  **Status Check:** The scan results can be queried via a task status API using the task id.
-8.  **Report Generation:** OWASP and SANS reports can be generated by fetching and reformatting the stored results.
+1.  **API Request:** Initiate a scan using the API, providing a Git repository URL or a file path.
+2.  **Task Enqueue:** The API enqueues a scan task using Asynq, including repository URL, language, scan type, and a unique task ID.
+3.  **Repository Cloning:** If a repository URL is provided, the tool clones it to a temporary directory.
+4.  **Scan Execution:** Asynq worker processes the tasks using relevant static analysis tools like Semgrep, gosec, bandit and eslint.
+5.  **Result Storage:** Scan results are stored in Redis with a TTL of 24 hours, using the task ID as the key.
+6.  **Status Check:** Query the scan results using the Task Status API with the unique task ID.
+7.  **Report Generation:** Generate OWASP and SANS reports by fetching and reformatting the scan results.
 
 ## Getting Started
 
 ### Prerequisites
 
-*   Docker and Docker Compose installed on your system.
-*   Go installed on your system (for development)
+*   [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed on your system.
+*   [Go](https://golang.org/dl/) installed on your system (for development purposes)
 
 ### Running Locally (Development)
 
 1.  **Clone the Repository:**
 
     ```bash
-    git clone <github-repo-link>
-    cd <cloned-directory>
+    git clone <your-github-repo-link>
+    cd armur-code-scanner
     ```
 
 2.  **Start the Development Environment:**
 
     ```bash
-     docker-compose -f docker-compose.dev.yml up --build -d
+    make docker-dev
     ```
-    This command does the following:
-       * Builds the `armur-tools` image (including installing all go tools).
-        * Builds the application image based on `Dockerfile`.
-        * Starts the application and Redis containers.
+    OR
 
-    After running this the application will be available at `http://localhost:4500`.
+    ```bash
+    docker-compose -f docker-compose.dev.yml up --build -d
+    ```
+
+    This command does the following:
+    *  Builds the application image based on `Dockerfile`.
+    *  Starts the application and Redis containers in development mode using `docker-compose.dev.yml`.
+    *  Generates the swagger documentation
+    *  After running this, the application will be available at `http://localhost:4500`.
+    *  Swagger documentation will be available here `http://localhost:4500/swagger/index.html`
 
 ### Testing with Postman
+
+#### A Postman collection is included in the /postman directory for easy API testing.
 
 You can use Postman to send requests to the API endpoints. Here's how:
 
@@ -165,3 +174,6 @@ You can use Postman to send requests to the API endpoints. Here's how:
         *  Replace `:task_id` with the ID from a previous request.
         *   Returns the SANS report.
 
+### License
+
+**This project is licensed under the MIT License - see the LICENSE file for details.**
