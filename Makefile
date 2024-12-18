@@ -1,12 +1,7 @@
-# Run docker compose up
-docker-prod:
-	@echo "Starting Docker containers in prod mode..."
-	docker-compose up --build -d
-
 # Run docker compose up dev
-docker-dev:
+docker-up:
 	@echo "Starting Docker containers in dev mode..."
-	docker-compose -f docker-compose.dev.yml up --build -d
+	docker-compose up --build -d
 
 # Stop docker containers
 docker-down:

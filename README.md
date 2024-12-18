@@ -1,6 +1,7 @@
 # Armur Code Scanner
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Discord](https://img.shields.io/discord/1021371417134125106)](https://discord.gg/PEycrqvd)
 
 This is the official repository for the Armur static code scanner, built with Go. It leverages the best open-source static analysis tools, combining them into a seamless pipeline for identifying security vulnerabilities and code quality issues. This tool is designed to be efficient and effective, particularly for languages like Go, Python, and JavaScript.
 
@@ -117,17 +118,17 @@ In addition to these, Armur Code Scanner also leverages the power of the followi
 2.  **Start the Development Environment:**
 
     ```bash
-    make docker-dev
+    make docker-up
     ```
     OR
 
     ```bash
-    docker-compose -f docker-compose.dev.yml up --build -d
+    docker-compose up --build -d
     ```
 
     This command does the following:
     *  Builds the application image based on `Dockerfile`.
-    *  Starts the application and Redis containers in development mode using `docker-compose.dev.yml`.
+    *  Starts the application and Redis containers in development mode using `docker-compose.yml`.
     *  Generates the swagger documentation
     *  After running this, the application will be available at `http://localhost:4500`.
     *  Swagger documentation will be available here `http://localhost:4500/swagger/index.html`
