@@ -10,7 +10,7 @@ import (
 
 func RunGoDeadcode(directory string) map[string]interface{} {
 	log.Println("Running deadcode")
-	results, err := RunDecodeOnRepo(directory)
+	results, err := RunDecodeOnRepO(directory)
 	if err != nil {
 		log.Printf("Error while running deadcode: %v", err)
 		return nil
@@ -20,11 +20,10 @@ func RunGoDeadcode(directory string) map[string]interface{} {
 	return newcatresult
 }
 
-func RunDecodeOnRepo(directory string) (string, error) {
+func RunDecodeOnRepO(directory string) (string, error) {
 	cmd := exec.Command("deadcode", directory)
 	output, err := cmd.CombinedOutput()
 	fmt.Println("Go deadcode Error: ", err)
-	fmt.Println(string(output))
 	return strings.TrimSpace(string(output)), nil
 }
 
