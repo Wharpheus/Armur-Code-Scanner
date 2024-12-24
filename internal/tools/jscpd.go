@@ -47,7 +47,6 @@ func RunJSCPDOnRepo(directory string) ([]map[string]interface{}, error) {
 			log.Printf("Failed to parse JSON report: %v", err)
 			return nil, err
 		}
-
 		duplicates, ok := report["duplicates"].([]interface{})
 		if !ok {
 			log.Println("No duplicates found in the report")
