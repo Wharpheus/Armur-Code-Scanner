@@ -97,9 +97,7 @@ func AdvancedScanRepositoryTask(repositoryURL, language string) map[string]inter
 
 func RunSimpleScan(dirPath string, language string) (map[string]interface{}, error) {
 	categorizedResults := utils.InitCategorizedResults()
-	//
 	semgrepResult := tools.RunSemgrep(dirPath, "--config=auto")
-	fmt.Println(semgrepResult)
 	mergeResultss(categorizedResults, semgrepResult)
 
 	// If the language is Go, we run Go-specific tools
@@ -140,7 +138,6 @@ func RunSimpleScan(dirPath string, language string) (map[string]interface{}, err
 		mergeResultss(categorizedResults, pylintResults)
 	} else if language == "js" {
 		eslintResult := tools.RunESLintOnRepo(dirPath)
-		fmt.Println("eslint result:", eslintResult)
 		mergeResultss(categorizedResults, eslintResult)
 	}
 	err := os.RemoveAll(dirPath)
@@ -148,9 +145,7 @@ func RunSimpleScan(dirPath string, language string) (map[string]interface{}, err
 		return nil, fmt.Errorf("failed to remove directory: %v", err)
 	}
 	newCatResult := utils.ConvertCategorizedResults(categorizedResults)
-	fmt.Println(newCatResult)
 	finalresult := utils.ReformatScanResults(newCatResult)
-	fmt.Println(finalresult)
 	return finalresult, nil
 }
 
@@ -184,14 +179,12 @@ func RunAdvancedScans(dirPath string, language string) (map[string]interface{}, 
 		mergeResultss(categorizedResults, godeadcodeResults)
 	} else if language == "py" {
 		vulnResults, _ := tools.RunVulture(dirPath)
-		fmt.Println(vulnResults)
 		mergeResultss(categorizedResults, vulnResults)
 	} else if language == "js" {
 		eslintResults := tools.RunESLintAdvanced(dirPath)
 		mergeResultss(categorizedResults, eslintResults)
 	}
 	err = os.RemoveAll(dirPath)
-	fmt.Println("removed ", dirPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove directory: %v", err)
 	}
