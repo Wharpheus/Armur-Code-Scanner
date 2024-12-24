@@ -3,6 +3,7 @@ package internal
 import (
 	utils "armur-codescanner/pkg"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os/exec"
 	"strings"
@@ -94,12 +95,26 @@ func formatCheckovIssue(issue map[string]interface{}, directory string) map[stri
 	checkID, _ := issue["check_id"].(string)
 	severity, _ := issue["severity"].(string)
 	checkName, _ := issue["check_name"].(string)
+	fileLineRange, _ := issue["file_line_range"].([]interface{}) // Access file_line_range
+
+	// Convert file_line_range to the format "start:end"
+	var fileLineRangeStr string
+	if len(fileLineRange) == 2 {
+		// Ensure to properly convert the elements to integers
+		startLine, ok1 := fileLineRange[0].(float64) // Use float64 to handle JSON numbers
+		endLine, ok2 := fileLineRange[1].(float64)
+		if ok1 && ok2 {
+			// Convert to int and format
+			fileLineRangeStr = fmt.Sprintf("%d:%d", int(startLine), int(endLine))
+		}
+	}
 
 	// Format the issue and return
 	return map[string]interface{}{
-		"path":     strings.Replace(filePath, directory, "", 1),
-		"check_id": checkID,
-		"severity": severity,
-		"message":  checkName,
+		"path":            strings.Replace(filePath, directory, "", 1),
+		"check_id":        checkID,
+		"severity":        severity,
+		"message":         checkName,
+		"file_line_range": fileLineRangeStr, // Include the formatted file line range
 	}
 }
