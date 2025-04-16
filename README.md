@@ -17,8 +17,9 @@ Visit [armur.ai](https://armur.ai) to use the cloud-based version of this tool, 
 4. [Project Structure](#project-structure)
 5. [Supported vulnerabilities](#supported-vulnerabilities)
 6. [Additional vulnerabilities information](#additional-vulnerability-information)
-7. [Testing with Postman](#testing-with-postman)
-8. [License](#license)
+7. [Scanning Local Repositories via Mounted Volume](#scanning-local-repositories-via-mounted-volume)
+8. [Testing with Postman](#testing-with-postman)
+9. [License](#license)
 
 ## Key Features
 
@@ -42,7 +43,7 @@ Visit [armur.ai](https://armur.ai) to use the cloud-based version of this tool, 
 6.  **Status Check:** Query the scan results using the Task Status API with the unique task ID.
 7.  **Report Generation:** Generate OWASP and SANS reports by fetching and reformatting the scan results.
 
-### Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -80,7 +81,7 @@ This command does the following:
 - After running this, the application will be available at `http://localhost:4500`.
 - Swagger documentation will be available here `http://localhost:4500/swagger/index.html`
 
-Project Structure
+### Project Structure
 
 The codebase is organized into the following main directories:
 
@@ -107,7 +108,7 @@ The codebase is organized into the following main directories:
 
 ```
 
-## Supported Vulnerabilities
+### Supported Vulnerabilities
 
 Armur Code Scanner is capable of detecting the following types of vulnerabilities and coding weaknesses, based on the Common Weakness Enumeration (CWE):
 
@@ -175,6 +176,31 @@ In addition to these, Armur Code Scanner also leverages the power of the followi
 - **Golint, Govet, Staticcheck, Gocyclo:** For GO specific code quality issues.
 - **Vulture:** For identifying dead code in Python projects.
 
+### Scanning Local Repositories via Mounted Volume
+
+To enable scanning of local repositories, the Docker Compose configuration mounts a volume from your host machine into the container:
+
+```yaml
+volumes:
+  - ./shared_tmp:/armur/repos
+```
+
+This line tells Docker to take the `shared_tmp` directory from your local machine (host) and mount it inside the container at the path `/armur/repos`. This means any folders you place inside `shared_tmp` will be accessible to the scanner within the container at `/armur/repos`.
+
+To scan a local codebase:
+
+1. Create or copy your project folder into the `shared_tmp` directory (e.g., `shared_tmp/my-local-project`).
+2. When making a request to the `/api/v1/scan/local` endpoint, use the container path in your request body:
+
+```json
+{
+  "local_path": "/armur/repos/my-local-project",
+  "language": "go"
+}
+```
+
+This allows you to scan any local project without needing to push it to a remote repository.
+
 ### Testing with Postman
 
 #### A Postman collection is included in the /postman directory for easy API testing.
@@ -195,6 +221,7 @@ You can use Postman to send requests to the API endpoints. Here's how:
   - Returns a `task_id` upon successful submission.
 
 - **`POST /api/v1/advanced-scan/repo`:**
+
   - Body:
     ```json
     {
@@ -203,6 +230,18 @@ You can use Postman to send requests to the API endpoints. Here's how:
     }
     ```
   - Returns a `task_id` upon successful submission.
+
+- **`POST /api/v1/scan/local`:**
+
+  - Body:
+    ```json
+    {
+      "local_path": "/armurs/repos/<repo_name>",
+      "language": "go"
+    }
+    ```
+  - Returns a `task_id` upon successful submission. Note, place your repo copy under the `shared_tmp` directory.
+
 - **`POST /api/v1/scan/file`:**
 
   - Select `form-data` and upload the file.

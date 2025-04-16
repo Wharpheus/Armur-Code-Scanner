@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"armur-codescanner/pkg"
+	utils "armur-codescanner/pkg"
 	"bytes"
 	"log"
 	"os/exec"

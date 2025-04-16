@@ -4,7 +4,6 @@ import (
 	"armur-codescanner/internal/tasks"
 	utils "armur-codescanner/pkg"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,13 +11,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ScanRequest represents a scan request for a github repository with a specified language
 type ScanRequest struct {
 	RepositoryURL string `json:"repository_url" example:"https://github.com/Armur-Ai/Armur-Code-Scanner"`
 	Language      string `json:"language" example:"go"`
 }
 
+// LocalScanRequest represents a scan request for a local repository with a specified language
 type LocalScanRequest struct {
-	LocalPath string `json:"local_path" example:"/path/to/local/repo"`
+	LocalPath string `json:"local_path" binding:"required" example:"/armur/repo"`
 	Language  string `json:"language" example:"go"`
 }
 
@@ -118,28 +119,13 @@ func ScanFile(c *gin.Context) {
 		return
 	}
 
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
-		return
-		// return "", fmt.Errorf("error getting home directory: %w", err)
+	baseDir := "/armur/repos"
+	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
+			return
+		}
 	}
-
-	baseDir := filepath.Join(homeDir, "armur-repos") // Change from "/armur/repos" to "~/armur-repos"
-	err = os.MkdirAll(baseDir, os.ModePerm)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
-		return
-		// return "", fmt.Errorf("error creating base directory: %w", err)
-	}
-
-	// baseDir := "/armur/repos"
-	// if _, err := os.Stat(baseDir); os.IsNotExist(err) {
-	// 	if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
-	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
-	// 		return
-	// 	}
-	// }
 
 	tempDir, err := os.MkdirTemp(baseDir, "scan")
 	if err != nil {
@@ -152,8 +138,6 @@ func ScanFile(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file", "details": err.Error()})
 		return
 	}
-
-	//log.Printf("File path: %s", filePath)
 
 	taskID, err := tasks.EnqueueScanTask(utils.FileScan, filePath, filePath)
 	if err != nil {
@@ -284,8 +268,6 @@ func ScanLocalHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Local path is required"})
 		return
 	}
-
-	log.Println("request path: ", request.LocalPath)
 
 	if request.Language != "" && request.Language != "go" && request.Language != "py" && request.Language != "js" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid language"})

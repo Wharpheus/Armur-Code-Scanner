@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"armur-codescanner/pkg" // Replace with your actual import path
+	utils "armur-codescanner/pkg"
 	"encoding/json"
 	"log"
 	"os/exec"

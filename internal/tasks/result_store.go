@@ -11,7 +11,7 @@ import (
 
 var redisClient = redis.RedisClient()
 
-func SaveTaskResult(taskID string, result map[string]interface{}) error {
+func SaveTaskResult(taskID string, result map[string]any) error {
 	ctx := context.Background()
 
 	resultData, err := json.Marshal(result)
@@ -22,7 +22,7 @@ func SaveTaskResult(taskID string, result map[string]interface{}) error {
 	return redisClient.Set(ctx, taskID, resultData, 24*time.Hour).Err()
 }
 
-func GetTaskResult(taskID string) (interface{}, error) {
+func GetTaskResult(taskID string) (any, error) {
 	ctx := context.Background()
 
 	resultData, err := redisClient.Get(ctx, taskID).Result()

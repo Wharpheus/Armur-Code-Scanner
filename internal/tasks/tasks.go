@@ -259,6 +259,9 @@ func RunAdvancedScans(dirPath string, language string) (map[string]interface{}, 
 
 	// SCA
 	osvscannerResults, err := tools.RunOSVScanner(dirPath)
+	if err != nil {
+		log.Println("error running OSV Scanner: ", err)
+	}
 	mergeResultss(categorizedResults, osvscannerResults)
 
 	// Dead code detection based on language
