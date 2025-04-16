@@ -5,12 +5,14 @@ import (
 	"armur-codescanner/internal/api"
 	"armur-codescanner/internal/redis"
 	"armur-codescanner/internal/worker"
-	"github.com/gin-gonic/gin"
-	"github.com/hibiken/asynq"
 	"log"
 	"os"
 
+	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
+
 	_ "armur-codescanner/docs"
+
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )

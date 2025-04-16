@@ -225,6 +225,61 @@
                 }
             }
         },
+        "/api/v1/scan/local": {
+            "post": {
+                "description": "Enqueues a scan task for a given local repository path and language.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scan"
+                ],
+                "summary": "Trigger a code scan on a local repository.",
+                "parameters": [
+                    {
+                        "description": "Request body containing local path and language",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.LocalScanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully enqueued task",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to enqueue scan task",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/scan/repo": {
             "post": {
                 "description": "Enqueues a scan task for a given repository URL and language.",
@@ -312,6 +367,19 @@
         }
     },
     "definitions": {
+        "api.LocalScanRequest": {
+            "type": "object",
+            "properties": {
+                "language": {
+                    "type": "string",
+                    "example": "go"
+                },
+                "local_path": {
+                    "type": "string",
+                    "example": "/path/to/local/repo"
+                }
+            }
+        },
         "api.ScanRequest": {
             "type": "object",
             "properties": {

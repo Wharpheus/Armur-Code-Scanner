@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
-	_ "armur-codescanner/pkg"
+	// _ "armur-codescanner/pkg"
 )
 
 func RunSemgrep(directory string, rules string) map[string]interface{} {

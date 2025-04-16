@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hibiken/asynq"
 )
 
@@ -32,6 +33,8 @@ func (h *ScanTaskHandler) ProcessTask(ctx context.Context, task *asynq.Task) err
 		result = tasks.AdvancedScanRepositoryTask(repoURL, language)
 	case utils.FileScan:
 		result, _ = tasks.ScanFileTask(repoURL)
+	case utils.LocalScan:
+		result = tasks.RunScanTaskLocal(repoURL, language)
 	default:
 		return fmt.Errorf("unknown scan type: %s", scanType)
 	}

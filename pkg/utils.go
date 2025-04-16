@@ -1,15 +1,16 @@
 package utils
 
 import (
-	"armur-codescanner/pkg/common"
+	pkg "armur-codescanner/pkg/common"
 	"encoding/json"
 	"fmt"
-	"github.com/go-git/go-git/v5"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-git/go-git/v5"
 )
 
 type CWEData struct {
@@ -22,6 +23,7 @@ const (
 	SimpleScan   = "simple_scan"
 	AdvancedScan = "advanced_scan"
 	FileScan     = "file_scan"
+	LocalScan    = "local_scan"
 )
 
 // Constants

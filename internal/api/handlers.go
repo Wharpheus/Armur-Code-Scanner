@@ -1,19 +1,25 @@
-// internal/api/handlers.go
 package api
 
 import (
 	"armur-codescanner/internal/tasks"
 	utils "armur-codescanner/pkg"
 	"fmt"
-	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ScanRequest struct {
 	RepositoryURL string `json:"repository_url" example:"https://github.com/Armur-Ai/Armur-Code-Scanner"`
 	Language      string `json:"language" example:"go"`
+}
+
+type LocalScanRequest struct {
+	LocalPath string `json:"local_path" example:"/path/to/local/repo"`
+	Language  string `json:"language" example:"go"`
 }
 
 // ScanHandler godoc
@@ -112,13 +118,28 @@ func ScanFile(c *gin.Context) {
 		return
 	}
 
-	baseDir := "/armur/repos"
-	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
-			return
-		}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
+		return
+		// return "", fmt.Errorf("error getting home directory: %w", err)
 	}
+
+	baseDir := filepath.Join(homeDir, "armur-repos") // Change from "/armur/repos" to "~/armur-repos"
+	err = os.MkdirAll(baseDir, os.ModePerm)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
+		return
+		// return "", fmt.Errorf("error creating base directory: %w", err)
+	}
+
+	// baseDir := "/armur/repos"
+	// if _, err := os.Stat(baseDir); os.IsNotExist(err) {
+	// 	if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
+	// 		return
+	// 	}
+	// }
 
 	tempDir, err := os.MkdirTemp(baseDir, "scan")
 	if err != nil {
@@ -141,7 +162,7 @@ func ScanFile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{
-		"task_id":    taskID,
+		"task_id": taskID,
 	})
 }
 
@@ -238,4 +259,51 @@ func TaskSans(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, report)
+}
+
+// ScanLocalHandler godoc
+// @Summary Trigger a code scan on a local repository.
+// @Description Enqueues a scan task for a given local repository path and language.
+// @Tags scan
+// @Accept json
+// @Produce json
+// @Param request body LocalScanRequest true "Request body containing local path and language"
+// @Success 200 {object} map[string]string "Successfully enqueued task"
+// @Failure 400 {object} map[string]string "Invalid request parameters"
+// @Failure 500 {object} map[string]string "Failed to enqueue scan task"
+// @Router /api/v1/scan/local [post]
+func ScanLocalHandler(c *gin.Context) {
+	var request LocalScanRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if request.LocalPath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Local path is required"})
+		return
+	}
+
+	log.Println("request path: ", request.LocalPath)
+
+	if request.Language != "" && request.Language != "go" && request.Language != "py" && request.Language != "js" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid language"})
+		return
+	}
+
+	// Verify the path exists and is a directory
+	if info, err := os.Stat(request.LocalPath); os.IsNotExist(err) || !info.IsDir() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or non-existent directory"})
+		return
+	}
+
+	// Enqueue the scan task with "local" scan type
+	taskID, err := tasks.EnqueueScanTask(utils.SimpleScan, request.LocalPath, request.Language)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"task_id": taskID})
 }
