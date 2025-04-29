@@ -45,6 +45,19 @@ Visit [armur.ai](https://armur.ai) to use the cloud-based version of this tool, 
 
 ## Getting Started
 
+### Documentation
+
+You can follow out detailed documentation by doing the following steps
+
+```bash
+git clone https://github.com/Armur-Ai/Armur-Code-Scanner.git
+cd Armur-Code-Scanner/docs-site
+
+npm i --legacy-peer-deps
+```
+
+This should open our developer logs at `localhost:3000`, and you can open these from your browser
+
 ### Prerequisites
 
 - [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed on your system.
