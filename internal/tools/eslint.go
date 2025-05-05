@@ -119,6 +119,9 @@ func RunESLint(directory, configFile string) ([]map[string]interface{}, error) {
 	cmd.Stderr = &stderr
 
 	err := cmd.Run()
+	if err != nil {
+		log.Println("error running ESLint: ", err)
+	}
 	var results []map[string]interface{}
 	err = json.Unmarshal(stdout.Bytes(), &results)
 	if err != nil {

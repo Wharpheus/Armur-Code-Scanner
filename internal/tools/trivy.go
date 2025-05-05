@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"armur-codescanner/pkg"
+	utils "armur-codescanner/pkg"
 )
 
 type TrivyResult struct {

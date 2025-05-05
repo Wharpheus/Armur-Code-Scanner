@@ -1,7 +1,8 @@
 package internal
 
 import (
-	"armur-codescanner/pkg" // Replace with the actual import path for utils
+	// Replace with the actual import path for utils
+	utils "armur-codescanner/pkg"
 	"encoding/json"
 	"log"
 	"os/exec"
@@ -11,7 +12,7 @@ import (
 
 type Secret struct {
 	Path string      `json:"path"`
-	Line interface{} `json:"line"` // Use interface{} to accommodate both string and int
+	Line interface{} `json:"line"`
 	Rule struct {
 		Message  string `json:"message"`
 		Severity string `json:"severity"`

@@ -1,19 +1,26 @@
-// internal/api/handlers.go
 package api
 
 import (
 	"armur-codescanner/internal/tasks"
 	utils "armur-codescanner/pkg"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/gin-gonic/gin"
 )
 
+// ScanRequest represents a scan request for a github repository with a specified language
 type ScanRequest struct {
 	RepositoryURL string `json:"repository_url" example:"https://github.com/Armur-Ai/Armur-Code-Scanner"`
 	Language      string `json:"language" example:"go"`
+}
+
+// LocalScanRequest represents a scan request for a local repository with a specified language
+type LocalScanRequest struct {
+	LocalPath string `json:"local_path" binding:"required" example:"/armur/repo"`
+	Language  string `json:"language" example:"go"`
 }
 
 // ScanHandler godoc
@@ -132,8 +139,6 @@ func ScanFile(c *gin.Context) {
 		return
 	}
 
-	//log.Printf("File path: %s", filePath)
-
 	taskID, err := tasks.EnqueueScanTask(utils.FileScan, filePath, filePath)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task", "details": err.Error()})
@@ -141,7 +146,7 @@ func ScanFile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{
-		"task_id":    taskID,
+		"task_id": taskID,
 	})
 }
 
@@ -238,4 +243,49 @@ func TaskSans(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, report)
+}
+
+// ScanLocalHandler godoc
+// @Summary Trigger a code scan on a local repository.
+// @Description Enqueues a scan task for a given local repository path and language.
+// @Tags scan
+// @Accept json
+// @Produce json
+// @Param request body LocalScanRequest true "Request body containing local path and language"
+// @Success 200 {object} map[string]string "Successfully enqueued task"
+// @Failure 400 {object} map[string]string "Invalid request parameters"
+// @Failure 500 {object} map[string]string "Failed to enqueue scan task"
+// @Router /api/v1/scan/local [post]
+func ScanLocalHandler(c *gin.Context) {
+	var request LocalScanRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if request.LocalPath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Local path is required"})
+		return
+	}
+
+	if request.Language != "" && request.Language != "go" && request.Language != "py" && request.Language != "js" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid language"})
+		return
+	}
+
+	// Verify the path exists and is a directory
+	if info, err := os.Stat(request.LocalPath); os.IsNotExist(err) || !info.IsDir() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or non-existent directory"})
+		return
+	}
+
+	// Enqueue the scan task with "local" scan type
+	taskID, err := tasks.EnqueueScanTask(utils.SimpleScan, request.LocalPath, request.Language)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"task_id": taskID})
 }

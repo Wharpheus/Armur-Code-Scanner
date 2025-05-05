@@ -1,5 +1,14 @@
 basePath: /
 definitions:
+  api.LocalScanRequest:
+    properties:
+      language:
+        example: go
+        type: string
+      local_path:
+        example: /path/to/local/repo
+        type: string
+    type: object
   api.ScanRequest:
     properties:
       language:
@@ -195,6 +204,42 @@ paths:
               type: string
             type: object
       summary: Trigger a code scan on file.
+      tags:
+      - scan
+  /api/v1/scan/local:
+    post:
+      consumes:
+      - application/json
+      description: Enqueues a scan task for a given local repository path and language.
+      parameters:
+      - description: Request body containing local path and language
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.LocalScanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully enqueued task
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to enqueue scan task
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Trigger a code scan on a local repository.
       tags:
       - scan
   /api/v1/scan/repo:

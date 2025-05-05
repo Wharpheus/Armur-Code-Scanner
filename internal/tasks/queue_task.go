@@ -3,9 +3,10 @@ package tasks
 import (
 	"armur-codescanner/internal/redis"
 	"encoding/json"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	"time"
 )
 
 func EnqueueScanTask(scanType, repoURL, language string) (string, error) {

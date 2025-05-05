@@ -5,10 +5,20 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine) {
-	r.POST("/api/v1/scan/repo", ScanHandler)
-	r.POST("/api/v1/advanced-scan/repo", AdvancedScanResult)
-	r.POST("/api/v1/scan/file", ScanFile)
-	r.GET("/api/v1/status/:task_id", TaskStatus)
-	r.GET("/api/v1/reports/owasp/:task_id", TaskOwasp)
-	r.GET("/api/v1/reports/sans/:task_id", TaskSans)
+	api := r.Group("/api/v1")
+	{
+		// Scan routes
+		api.POST("/scan/repo", ScanHandler)
+		api.POST("/advanced-scan/repo", AdvancedScanResult)
+		api.POST("/scan/file", ScanFile)
+		api.POST("/scan/local", ScanLocalHandler)
+
+		// status
+		api.GET("/status/:task_id", TaskStatus)
+
+		// reports
+		api.GET("/reports/owasp/:task_id", TaskOwasp)
+		api.GET("/reports/sans/:task_id", TaskSans)
+	}
+
 }

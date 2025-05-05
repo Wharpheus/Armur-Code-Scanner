@@ -1,13 +1,12 @@
 package internal
 
 import (
+	utils "armur-codescanner/pkg"
 	"bytes"
 	"encoding/json"
 	"log"
 	"os/exec"
 	"strings"
-
-	"armur-codescanner/pkg" // Replace with your actual utils package import
 )
 
 func RunPylint(directory string) map[string]interface{} {

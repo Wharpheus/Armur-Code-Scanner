@@ -1,13 +1,12 @@
 package internal
 
 import (
+	utils "armur-codescanner/pkg"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"armur-codescanner/pkg"
 )
 
 func RunGovet(directory string) map[string]interface{} {

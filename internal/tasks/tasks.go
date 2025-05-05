@@ -2,7 +2,7 @@ package tasks
 
 import (
 	tools "armur-codescanner/internal/tools"
-	"armur-codescanner/pkg"
+	utils "armur-codescanner/pkg"
 	"errors"
 	"fmt"
 	"log"
@@ -51,6 +51,40 @@ func RunScanTask(repositoryURL, language string) map[string]interface{} {
 
 	return categorizedResults
 }
+
+func RunScanTaskLocal(repoUrl, language string) map[string]interface{} {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Error while running scan: %v", r)
+		}
+	}()
+
+	dirPath := repoUrl
+
+	if language == "" {
+		language = utils.DetectRepoLanguage(dirPath)
+		log.Println("Language detected:", language)
+	} else {
+		// Remove non-relevant files based on the language
+		if err := utils.RemoveNonRelevantFiles(dirPath, language); err != nil {
+			log.Println("Error removing non-relevant files:", err)
+			return map[string]interface{}{
+				"status": "failed",
+				"error":  err.Error(),
+			}
+		}
+	}
+
+	categorizedResults, err_ := RunSimpleScanLocal(dirPath, language)
+	if err_ != nil {
+		return map[string]interface{}{
+			"status": "failed",
+		}
+	}
+
+	return categorizedResults
+}
+
 func AdvancedScanRepositoryTask(repositoryURL, language string) map[string]interface{} {
 	defer func() {
 		if r := recover(); r != nil {
@@ -149,6 +183,60 @@ func RunSimpleScan(dirPath string, language string) (map[string]interface{}, err
 	return finalresult, nil
 }
 
+func RunSimpleScanLocal(dirPath string, language string) (map[string]interface{}, error) {
+	categorizedResults := utils.InitCategorizedResults()
+	semgrepResult := tools.RunSemgrep(dirPath, "--config=auto")
+	mergeResultss(categorizedResults, semgrepResult)
+
+	// If the language is Go, we run Go-specific tools
+	if language == "go" {
+		gosecResults := tools.RunGosec(dirPath)
+		mergeResultss(categorizedResults, gosecResults)
+
+		// Run Golint
+		golintResults := tools.RunGolint(dirPath)
+		mergeResultss(categorizedResults, golintResults)
+
+		// Run Govet
+		govetResults := tools.RunGovet(dirPath)
+		mergeResultss(categorizedResults, govetResults)
+
+		// Run Staticcheck
+		staticcheckResults := tools.RunStaticCheck(dirPath)
+		mergeResultss(categorizedResults, staticcheckResults)
+
+		// Run Gocyclo
+		gocyloResults := tools.RunGocyclo(dirPath)
+		mergeResultss(categorizedResults, gocyloResults)
+	} else if language == "py" {
+		// Run Bandit for Python
+		banditResults := tools.RunBandit(dirPath)
+		mergeResultss(categorizedResults, banditResults)
+
+		// Run Pydocstyle
+		pydocstyleResults := tools.RunPydocstyle(dirPath)
+		mergeResultss(categorizedResults, pydocstyleResults)
+
+		// Run Radon
+		radonResults := tools.RunRadon(dirPath)
+		mergeResultss(categorizedResults, radonResults)
+
+		// Run Pylint
+		pylintResults := tools.RunPylint(dirPath)
+		mergeResultss(categorizedResults, pylintResults)
+	} else if language == "js" {
+		eslintResult := tools.RunESLintOnRepo(dirPath)
+		mergeResultss(categorizedResults, eslintResult)
+	}
+	// err := os.RemoveAll(dirPath)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to remove directory: %v", err)
+	// }
+	newCatResult := utils.ConvertCategorizedResults(categorizedResults)
+	finalresult := utils.ReformatScanResults(newCatResult)
+	return finalresult, nil
+}
+
 func RunAdvancedScans(dirPath string, language string) (map[string]interface{}, error) {
 	// Initialize the categorized results
 	categorizedResults := utils.InitAdvancedCategorizedResults()
@@ -171,6 +259,9 @@ func RunAdvancedScans(dirPath string, language string) (map[string]interface{}, 
 
 	// SCA
 	osvscannerResults, err := tools.RunOSVScanner(dirPath)
+	if err != nil {
+		log.Println("error running OSV Scanner: ", err)
+	}
 	mergeResultss(categorizedResults, osvscannerResults)
 
 	// Dead code detection based on language

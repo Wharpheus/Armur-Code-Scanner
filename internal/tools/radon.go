@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	utils "armur-codescanner/pkg" // Replace with your actual utils package import
+	utils "armur-codescanner/pkg"
 )
 
 func RunRadon(directory string) map[string]interface{} {
