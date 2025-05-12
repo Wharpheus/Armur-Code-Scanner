@@ -9,6 +9,10 @@ This project was born from conversations with hundreds of red teamers, bug bount
 
 Visit [armur.ai](https://armur.ai) to use the cloud-based version of this tool, which includes proprietary AI agents powered by LLMs to provide extremely detailed code security reports for Go, Python, JavaScript, and smart contract code for Solidity, Move, and Solana (Rust).
 
+## Using the Armur CLI
+
+For a more streamlined experience, you can use the Armur CLI tool. The CLI provides a command-line interface to interact with the Armur Code Scanner, making it easier to scan your codebases directly from your terminal. For detailed instructions on installation and usage of the CLI, please refer to our [CLI Documentation](/cli/README.md).
+
 ## Table of Contents
 
 1. [Key Features](#key-features)
