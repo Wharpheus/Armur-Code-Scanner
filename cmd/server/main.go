@@ -39,6 +39,9 @@ func main() {
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "4500"
+	}
 	if err := router.Run(":" + port); err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
