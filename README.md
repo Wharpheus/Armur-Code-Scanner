@@ -9,21 +9,60 @@ This project was born from conversations with hundreds of red teamers, bug bount
 
 Visit [armur.ai](https://armur.ai) to use the cloud-based version of this tool, which includes proprietary AI agents powered by LLMs to provide extremely detailed code security reports for Go, Python, JavaScript, and smart contract code for Solidity, Move, and Solana (Rust).
 
-## Using the Armur CLI
-
-For a more streamlined experience, you can use the Armur CLI tool. The CLI provides a command-line interface to interact with the Armur Code Scanner, making it easier to scan your codebases directly from your terminal. For detailed instructions on installation and usage of the CLI, please refer to our [CLI Documentation](/cli/README.md).
-
 ## Table of Contents
 
 1. [Key Features](#key-features)
-2. [How It Works](#how-armur-code-scanner-works)
-3. [Getting Started](#getting-started)
-4. [Project Structure](#project-structure)
-5. [Supported vulnerabilities](#supported-vulnerabilities)
-6. [Additional vulnerabilities information](#additional-vulnerability-information)
-7. [Scanning Local Repositories via Mounted Volume](#scanning-local-repositories-via-mounted-volume)
-8. [Testing with Postman](#testing-with-postman)
-9. [License](#license)
+2. [Using the CLI tool](#using-the-armur-cli)
+3. [How It Works](#how-armur-code-scanner-works)
+4. [Getting Started](#getting-started)
+5. [Project Structure](#project-structure)
+6. [Supported vulnerabilities](#supported-vulnerabilities)
+7. [Additional vulnerabilities information](#additional-vulnerability-information)
+8. [Scanning Local Repositories via Mounted Volume](#scanning-local-repositories-via-mounted-volume)
+9. [Testing with Postman](#testing-with-postman)
+10. [License](#license)
+
+## Using the Armur CLI
+
+For a more streamlined experience, you can use the Armur CLI tool. The CLI provides a command-line interface to interact with the Armur Code Scanner, making it easier to scan your codebases directly from your terminal. Following are the steps to quickly get started using it, and for detailed instructions on installation and usage of the CLI, please refer to our [CLI Documentation](/cli/README.md).
+
+### Installing the CLI
+
+These instructions will allow you to quickly setup and install the cli tool for usage.
+
+```bash
+# Clone the repository
+git clone https://github.com/Armur-AI/Armur-Code-Scanner.git
+
+# Navigate to the CLI directory
+cd Armur-Code-Scanner/cli
+
+# Build the CLI
+go build -o armur-cli
+# verify that the cli has been installed
+./armur-cli
+
+# Move to your PATH (optional). This allows you to run armur anywhere in you machine
+sudo mv armur-cli /usr/local/bin/
+```
+
+### After installing the tool
+
+You can now run a couple of commands that allow you to do code scanning functionality.
+
+If the armur code scanner project is not running on your machine, you can either run that manually using
+
+```bash
+1. make docker-up
+## or
+2. armur-cli docker
+```
+
+The you can start by running a scan on a github repository by running the following command.
+
+```bash
+armur-cli scan <github-url> --language go
+```
 
 ## Key Features
 

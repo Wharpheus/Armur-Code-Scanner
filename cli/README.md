@@ -24,7 +24,7 @@ cd Armur-Code-Scanner/cli
 # Build the CLI
 go build -o armur-cli
 
-# Move to your PATH (optional)
+# Move to your PATH (optional). This allows you to run the cli in any directory on your system
 sudo mv armur-cli /usr/local/bin/
 ```
 
@@ -32,17 +32,24 @@ sudo mv armur-cli /usr/local/bin/
 
 ### Configuration
 
-The CLI can be configured in three ways:
+The CLI can be configured in the following ways:
 
-1. **Interactive Mode**:
+1. **Docker**
+   You can either run the codescanner on docker using the `armur-cli docker up` command or you can run and setup on your machine (no recommended) because of the extra work.
+
+2. **Interactive Mode**:
+
 ```bash
 armur-cli config
 ```
+
 This will launch an interactive prompt where you can:
+
 - Select the configuration key to set (API URL, Redis URL, or API Key)
 - Enter the new value
 
-2. **Command Line**:
+3. **Command Line**:
+
 ```bash
 # Set API URL
 armur-cli config api_url https://api.armur.ai
@@ -54,7 +61,8 @@ armur-cli config redis_url redis://localhost:6379
 armur-cli config api_key your-api-key-here
 ```
 
-3. **Environment Variables**:
+4. **Environment Variables**:
+
 ```bash
 export ARMUR_API_URL=https://api.armur.ai
 export ARMUR_REDIS_URL=redis://localhost:6379
@@ -70,6 +78,7 @@ armur-cli api
 ```
 
 This will launch an interactive prompt where you can:
+
 1. Select the audit type:
    - Vulnerability
    - Audit
