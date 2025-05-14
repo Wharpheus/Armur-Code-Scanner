@@ -10,9 +10,129 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/charmbracelet/huh"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
+
+var scanCmd2 = &cobra.Command{
+	Use:   "scan-i",
+	Short: "Enter interactive scanning mode",
+	Long:  "Launches a terminal UI to configure and start a scan interactively.",
+	Run: func(cmd *cobra.Command, args []string) {
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			color.Red("Error loading configuration: %v", err)
+			os.Exit(1)
+		}
+
+		var targetType string
+		var targetPath string
+		var language string
+		var scanMode string
+		var output string
+
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewSelect[string]().
+					Title("What would you like to scan?").
+					Options(
+						huh.NewOption("Repository URL", "repo"),
+						huh.NewOption("Local file or directory", "local"),
+					).
+					Value(&targetType),
+				huh.NewInput().
+					Title("Enter the path or URL to scan").
+					Prompt(">").
+					Value(&targetPath),
+				huh.NewSelect[string]().
+					Title("Scan mode").
+					Options(
+						huh.NewOption("Simple", "simple"),
+						huh.NewOption("Advanced", "advanced"),
+					).
+					Value(&scanMode),
+				huh.NewSelect[string]().
+					Title("Output format").
+					Options(
+						huh.NewOption("Text", "text"),
+						huh.NewOption("JSON", "json"),
+					).
+					Value(&output),
+			),
+		)
+
+		if err := form.Run(); err != nil {
+			color.Red("Prompt error: %v", err)
+			os.Exit(1)
+		}
+
+		if strings.HasPrefix(targetPath, "http://") || strings.HasPrefix(targetPath, "https://") {
+			if err := huh.NewInput().
+				Title("Specify programming language for repo").
+				Validate(func(s string) error {
+					if s == "" {
+						return fmt.Errorf("language is required for repositories")
+					}
+					return nil
+				}).
+				Value(&language).
+				Run(); err != nil {
+				color.Red("Language input error: %v", err)
+				os.Exit(1)
+			}
+		}
+
+		apiClient := api.NewClient(cfg.API.URL)
+		var taskID string
+
+		fmt.Println(color.CyanString("Initiating scan..."))
+		if targetType == "repo" {
+			taskID, err = apiClient.ScanRepository(targetPath, language, scanMode == "advanced")
+		} else {
+			taskID, err = apiClient.ScanFile(targetPath, scanMode == "advanced")
+		}
+
+		if err != nil {
+			color.Red("Failed to start scan: %v", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(color.GreenString("Scan started. Task ID: %s", taskID))
+
+		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+		s.Suffix = " Waiting for scan to complete..."
+		s.Start()
+
+		var result map[string]interface{}
+		var status string
+		for {
+			status, result, err = apiClient.GetTaskStatus(taskID)
+			if err != nil {
+				s.Stop()
+				color.Red("Error fetching task status: %v", err)
+				os.Exit(1)
+			}
+			if status == "success" {
+				s.Stop()
+				break
+			}
+			if status == "failed" {
+				s.Stop()
+				color.Red("Scan failed.")
+				os.Exit(1)
+			}
+			time.Sleep(2 * time.Second)
+		}
+
+		fmt.Println()
+		if output == "json" {
+			utils.PrintResultsJSON(result)
+		} else {
+			printFormattedResults(result)
+		}
+	},
+}
 
 var scanCmd = &cobra.Command{
 	Use:   "scan [target]",
@@ -308,6 +428,7 @@ func truncateString(s string, maxLen int) string {
 
 func init() {
 	rootCmd.AddCommand(scanCmd)
+	rootCmd.AddCommand(scanCmd2)
 	scanCmd.Flags().StringP("language", "l", "", "Specify the programming language")
 	scanCmd.Flags().BoolP("simple", "s", true, "Perform a simple scan")
 	scanCmd.Flags().BoolP("advanced", "a", false, "Perform an advanced scan")
