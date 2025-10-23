@@ -44,7 +44,6 @@ func CategorizeSemgrepResults(results string, directory string) map[string][]int
 		}
 
 		resultsArr, ok := parsedResults["results"].([]interface{})
-		fmt.Println(resultsArr, ok, ok)
 		if !ok {
 			log.Println("No 'results' array found in Semgrep output.")
 			return categorizedResults
@@ -113,6 +112,39 @@ func CategorizeSemgrepResults(results string, directory string) map[string][]int
 			default:
 				// Handle antipattern bugs
 				antipatternBug := map[string]interface{}{
+					"check_id": result["check_id"],
+					"column":   fmt.Sprintf("%v", result["start"].(map[string]interface{})["col"]),
+					"line":     fmt.Sprintf("%v", result["start"].(map[string]interface{})["line"]),
+					"message":  result["extra"].(map[string]interface{})["message"],
+					"path":     path,
+				}
+				categorizedResults[ANTIPATTERNS_BUGS] = append(categorizedResults[ANTIPATTERNS_BUGS], antipatternBug)
+			}
+		}
+	}
+	return categorizedResults
+}
+
+func formatSeverity(result map[string]interface{}) string {
+	extra, ok := result["extra"].(map[string]interface{})
+	if !ok {
+		return "UNKNOWN"
+	}
+	originalSeverity, ok := extra["severity"].(string)
+	if !ok {
+		return "UNKNOWN"
+	}
+	switch strings.ToUpper(originalSeverity) {
+	case "INFO":
+		return "LOW"
+	case "WARNING":
+		return "MEDIUM"
+	case "ERROR":
+		return "HIGH"
+	default:
+		return originalSeverity
+	}
+}
 					"column":  fmt.Sprintf("%v", result["start"].(map[string]interface{})["col"]),
 					"line":    fmt.Sprintf("%v", result["start"].(map[string]interface{})["line"]),
 					"message": result["extra"].(map[string]interface{})["message"],

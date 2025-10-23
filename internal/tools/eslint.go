@@ -35,12 +35,12 @@ func RunESLintOnRepo(repoPath string) map[string]interface{} {
 	// Docstring check
 	log.Println("Running ESLint for docstrings")
 	docResults, _ := RunESLint(repoPath, "eslint_jsdoc.config.js")
-	categorizedResults[DOCKSTRING_ABSENT] = FormatIssues(docResults, repoPath)
+	categorizedResults[utils.DOCKSTRING_ABSENT] = FormatIssues(docResults, repoPath)
 
 	// Security check
 	log.Println("Running ESLint for security issues")
 	securityResults, _ := RunESLint(repoPath, "eslint_security.config.js")
-	categorizedResults[SECURITY_ISSUES] = FormatIssues(securityResults, repoPath)
+	categorizedResults[utils.SECURITY_ISSUES] = FormatIssues(securityResults, repoPath)
 
 	// Complex functions and antipatterns
 	log.Println("Running ESLint for complex functions and antipatterns")
@@ -50,7 +50,6 @@ func RunESLintOnRepo(repoPath string) map[string]interface{} {
 	categorizedResults[ANTIPATTERNS_BUGS] = categorizedComplex[ANTIPATTERNS_BUGS]
 	newcatresult := utils.ConvertCategorizedResults(categorizedResults)
 	return newcatresult
-
 }
 
 func RunESLintAdvancedOnRepo(repoPath string) (map[string][]interface{}, error) {

@@ -45,25 +45,25 @@ const (
 )
 
 // ReformatAdvancedScanResults reformats advanced scan results
-func ReformatScanResults(results map[string]interface{}) map[string]interface{} {
-	reformattedResults := map[string]interface{}{
-		COMPLEX_FUNCTIONS: []interface{}{},
-		DOCKSTRING_ABSENT: []interface{}{},
-		ANTIPATTERNS_BUGS: []interface{}{},
-		SECURITY_ISSUES:   []interface{}{},
+func ReformatScanResults(results map[string][]Issue) *SimpleScanResults {
+	reformattedResults := &SimpleScanResults{
+		ComplexFunctions: []Issue{},
+		DocstringAbsent:  []Issue{},
+		AntipatternsBugs: []Issue{},
+		SecurityIssues:   []Issue{},
 	}
 
-	if data := ReformatComplexFunctions(results); len(data) > 0 {
-		reformattedResults[COMPLEX_FUNCTIONS] = data
+	if data, ok := results[COMPLEX_FUNCTIONS]; ok && len(data) > 0 {
+		reformattedResults.ComplexFunctions = data
 	}
-	if data := ReformatDocstringIssues(results); len(data) > 0 {
-		reformattedResults[DOCKSTRING_ABSENT] = data
+	if data, ok := results[DOCKSTRING_ABSENT]; ok && len(data) > 0 {
+		reformattedResults.DocstringAbsent = data
 	}
-	if data := ReformatAntipatternsBugs(results); len(data) > 0 {
-		reformattedResults[ANTIPATTERNS_BUGS] = data
+	if data, ok := results[ANTIPATTERNS_BUGS]; ok && len(data) > 0 {
+		reformattedResults.AntipatternsBugs = data
 	}
-	if data := ReformatSecurityIssues(results); len(data) > 0 {
-		reformattedResults[SECURITY_ISSUES] = data
+	if data, ok := results[SECURITY_ISSUES]; ok && len(data) > 0 {
+		reformattedResults.SecurityIssues = data
 	}
 
 	return reformattedResults

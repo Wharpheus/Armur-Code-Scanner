@@ -52,7 +52,7 @@ func CategorizeRadonResults(results string, directory string) map[string][]inter
 			relativePath := strings.Replace(filePath, directory, "", 1)
 			for _, issue := range issues {
 				// Add the path to the issue and append it directly to COMPLEX_FUNCTIONS
-				issue["path"] = relativePath
+				issue.(map[string]interface{})["path"] = relativePath
 				categorizedResults[utils.COMPLEX_FUNCTIONS] = append(categorizedResults[utils.COMPLEX_FUNCTIONS], issue)
 			}
 		}

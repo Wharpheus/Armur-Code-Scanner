@@ -1,4 +1,4 @@
-package tools
+tpackage tools
 
 import (
 	utils "armur-codescanner/pkg"

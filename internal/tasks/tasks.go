@@ -7,14 +7,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"armur-codescanner/internal/solidity"
 	"armur-codescanner/internal/tools"
 	utils "armur-codescanner/pkg"
+	"armur-codescanner/pkg/solidity"
 )
 
 func RunScanTask(repositoryURL, language string) map[string]interface{} {
 	defer func() {
-		if r := recover(); r != nil {
+		if r := recover(); r != nil { // To-do: Create struct for advanced results
 			log.Printf("Error while running scan: %v", r)
 		}
 	}()
@@ -29,21 +29,10 @@ func RunScanTask(repositoryURL, language string) map[string]interface{} {
 		}
 	}
 
-	if language == "" {
-		language = utils.DetectRepoLanguage(dirPath)
-		log.Println("Language detected:", language)
-	} else {
-		// Remove non-relevant files based on the language
-		if err := utils.RemoveNonRelevantFiles(dirPath, language); err != nil {
-			log.Println("Error removing non-relevant files:", err)
-			return map[string]interface{}{
-				"status": "failed",
-				"error":  err.Error(),
-			}
-		}
+	language, err = prepareScanDirectory(dirPath, language)
+	if err != nil {
+		return map[string]interface{}{"status": "failed", "error": err.Error()}
 	}
-
-	// Run the scan
 	categorizedResults, err := RunSimpleScan(dirPath, language)
 	if err != nil {
 		return map[string]interface{}{
@@ -64,20 +53,10 @@ func RunScanTaskLocal(repoUrl, language string) map[string]interface{} {
 
 	dirPath := repoUrl
 
-	if language == "" {
-		language = utils.DetectRepoLanguage(dirPath)
-		log.Println("Language detected:", language)
-	} else {
-		// Remove non-relevant files based on the language
-		if err := utils.RemoveNonRelevantFiles(dirPath, language); err != nil {
-			log.Println("Error removing non-relevant files:", err)
-			return map[string]interface{}{
-				"status": "failed",
-				"error":  err.Error(),
-			}
-		}
+	language, err := prepareScanDirectory(dirPath, language)
+	if err != nil {
+		return map[string]interface{}{"status": "failed", "error": err.Error()}
 	}
-
 	categorizedResults, err := RunSimpleScanLocal(dirPath, language)
 	if err != nil {
 		return map[string]interface{}{
@@ -106,22 +85,10 @@ func AdvancedScanRepositoryTask(repositoryURL, language string) map[string]inter
 		}
 	}
 
-	// Detect the language if not provided
-	if language == "" {
-		language = utils.DetectRepoLanguage(dirPath)
-		log.Println("Language detected:", language)
-	} else {
-		// Remove non-relevant files based on the language
-		if err := utils.RemoveNonRelevantFiles(dirPath, language); err != nil {
-			log.Println("Error removing non-relevant files:", err)
-			return map[string]interface{}{
-				"status": "failed",
-				"error":  err.Error(),
-			}
-		}
+	language, err = prepareScanDirectory(dirPath, language)
+	if err != nil {
+		return map[string]interface{}{"status": "failed", "error": err.Error()}
 	}
-
-	// Run the advanced scans
 	categorizedResults, err := RunAdvancedScans(dirPath, language)
 	if err != nil {
 		log.Println("Error running advanced scans:", err)
@@ -131,6 +98,20 @@ func AdvancedScanRepositoryTask(repositoryURL, language string) map[string]inter
 		}
 	}
 	return categorizedResults
+}
+
+func prepareScanDirectory(dirPath, language string) (string, error) {
+	if language == "" {
+		language = utils.DetectRepoLanguage(dirPath)
+		log.Println("Language detected:", language)
+	} else {
+		// Remove non-relevant files based on the language
+		if err := utils.RemoveNonRelevantFiles(dirPath, language); err != nil {
+			log.Println("Error removing non-relevant files:", err)
+			return "", err
+		}
+	}
+	return language, nil
 }
 
 func RunSimpleScan(dirPath string, language string) (map[string]interface{}, error) {
@@ -212,7 +193,7 @@ func RunSimpleScanLocal(dirPath string, language string) (map[string]interface{}
 	return runSimpleScanInternal(dirPath, language, false)
 }
 
-func RunAdvancedScans(dirPath string, language string) (map[string]interface{}, error) {
+func RunAdvancedScans(dirPath string, language string) (map[string]interface{}, error) { // To-do: Create struct for advanced results
 	// Initialize the categorized results
 	categorizedResults := utils.InitAdvancedCategorizedResults()
 
