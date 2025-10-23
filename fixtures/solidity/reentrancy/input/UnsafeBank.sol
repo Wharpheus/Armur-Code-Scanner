@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.0;
 
 contract UnsafeBank {
     mapping(address => uint256) public balances;
@@ -31,7 +31,7 @@ contract UnsafeBank {
 
         // Perform the external ether transfer using low-level call for flexibility
         // Cast msg.sender to payable for explicit type safety
-        bool success = payable(msg.sender).call{value: amount}("");
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
 
         // Revert on transfer failure to maintain atomicity
         require(success, "Ether transfer failed: unable to send funds");
