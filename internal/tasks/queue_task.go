@@ -19,11 +19,17 @@ func RedisClientOptions() asynq.RedisConnOpt {
 	password := os.Getenv("REDIS_PASSWORD")
 	db := getEnvAsInt("REDIS_DB", 0)
 
-	return asynq.RedisClientOpt{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
+	redisURL := "redis://"
+	if password != "" {
+		redisURL += ":" + password + "@"
 	}
+	redisURL += addr + "/" + strconv.Itoa(db)
+
+	opt, err := asynq.ParseRedisURI(redisURL)
+	if err != nil {
+		panic(err) // or handle accordingly, since this is config time
+	}
+	return opt
 }
 
 func getEnvAsInt(key string, defaultValue int) int {
