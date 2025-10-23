@@ -54,6 +54,7 @@ Thumbs.db
 *.testdata
 *_test.go
 
+
 # Miscellaneous
 *.lock
 *.key

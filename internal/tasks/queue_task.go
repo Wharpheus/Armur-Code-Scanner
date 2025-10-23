@@ -1,13 +1,42 @@
 package tasks
 
 import (
-	"armur-codescanner/internal/redis"
 	"encoding/json"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )
+
+func RedisClientOptions() asynq.RedisConnOpt {
+	addr := os.Getenv("REDIS_ADDR")
+	if addr == "" {
+		addr = "localhost:6379"
+	}
+
+	password := os.Getenv("REDIS_PASSWORD")
+	db := getEnvAsInt("REDIS_DB", 0)
+
+	return asynq.RedisClientOpt{
+		Addr:     addr,
+		Password: password,
+		DB:       db,
+	}
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+	intValue, err := strconv.Atoi(value)
+	if err != nil {
+		return defaultValue
+	}
+	return intValue
+}
 
 func EnqueueScanTask(scanType, repoURL, language string) (string, error) {
 	taskID := uuid.New().String()
@@ -22,7 +51,7 @@ func EnqueueScanTask(scanType, repoURL, language string) (string, error) {
 		return "", err
 	}
 
-	client := asynq.NewClient(redis.RedisClientOptions())
+	client := asynq.NewClient(RedisClientOptions())
 	defer client.Close()
 
 	task := asynq.NewTask("scan:repo", taskPayload)
@@ -48,7 +77,7 @@ func EnqueueBatchScanTask(contractPaths []string, language, network string) (str
 		return "", err
 	}
 
-	client := asynq.NewClient(redis.RedisClientOptions())
+	client := asynq.NewClient(RedisClientOptions())
 	defer client.Close()
 
 	task := asynq.NewTask("batch:scan", taskPayload)

@@ -4,12 +4,49 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
+	"strconv"
+	"sync"
 	"time"
 
-	"armur-codescanner/internal/redis"
+	"github.com/go-redis/redis/v8"
 )
 
-var redisClient = redis.RedisClient()
+var (
+	resultStoreRedisClient     *redis.Client
+	resultStoreRedisClientOnce sync.Once
+)
+
+func initResultStoreRedisClient() *redis.Client {
+	resultStoreRedisClientOnce.Do(func() {
+		addr := os.Getenv("REDIS_ADDR")
+		if addr == "" {
+			addr = "localhost:6379"
+		}
+
+		password := os.Getenv("REDIS_PASSWORD")
+		db := getEnvAsIntResultStore("REDIS_DB", 0)
+
+		resultStoreRedisClient = redis.NewClient(&redis.Options{
+			Addr:     addr,
+			Password: password,
+			DB:       db,
+		})
+	})
+	return resultStoreRedisClient
+}
+
+func getEnvAsIntResultStore(key string, defaultValue int) int {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+	intValue, err := strconv.Atoi(value)
+	if err != nil {
+		return defaultValue
+	}
+	return intValue
+}
 
 func SaveTaskResult(taskID string, result map[string]any) error {
 	ctx := context.Background()
@@ -19,13 +56,15 @@ func SaveTaskResult(taskID string, result map[string]any) error {
 		return err
 	}
 
-	return redisClient.Set(ctx, taskID, resultData, 24*time.Hour).Err()
+	client := initResultStoreRedisClient()
+	return client.Set(ctx, taskID, resultData, 24*time.Hour).Err()
 }
 
 func GetTaskResult(taskID string) (any, error) {
 	ctx := context.Background()
 
-	resultData, err := redisClient.Get(ctx, taskID).Result()
+	client := initResultStoreRedisClient()
+	resultData, err := client.Get(ctx, taskID).Result()
 	if err != nil {
 		if err.Error() == "redis: nil" {
 			return nil, errors.New("task result not found")
