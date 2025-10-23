@@ -78,13 +78,13 @@ armur-cli scan <github-url> --language go
 
 ## How Armur Code Scanner Works
 
-1.  **API Request:** Initiate a scan using the API, providing a Git repository URL or a file path.
-2.  **Task Enqueue:** The API enqueues a scan task using Asynq, including repository URL, language, scan type, and a unique task ID.
-3.  **Repository Cloning:** If a repository URL is provided, the tool clones it to a temporary directory.
-4.  **Scan Execution:** Asynq worker processes the tasks using relevant static analysis tools like Semgrep, gosec, bandit and eslint based on the programming language specified.
-5.  **Result Storage:** Scan results are stored in Redis with a TTL of 24 hours, using the task ID as the key.
-6.  **Status Check:** Query the scan results using the Task Status API with the unique task ID.
-7.  **Report Generation:** Generate OWASP and SANS reports by fetching and reformatting the scan results.
+1. **API Request:** Initiate a scan using the API, providing a Git repository URL or a file path.
+2. **Task Enqueue:** The API enqueues a scan task using Asynq, including repository URL, language, scan type, and a unique task ID.
+3. **Repository Cloning:** If a repository URL is provided, the tool clones it to a temporary directory.
+4. **Scan Execution:** Asynq worker processes the tasks using relevant static analysis tools like Semgrep, gosec, bandit and eslint based on the programming language specified.
+5. **Result Storage:** Scan results are stored in Redis with a TTL of 24 hours, using the task ID as the key.
+6. **Status Check:** Query the scan results using the Task Status API with the unique task ID.
+7. **Report Generation:** Generate OWASP and SANS reports by fetching and reformatting the scan results.
 
 ## Getting Started
 
@@ -108,26 +108,26 @@ This should open our developer logs at `localhost:3000`, and you can open these 
 
 ### Running Locally (Development)
 
-1.  **Clone the Repository:**
+1. **Clone the Repository:**
 
-```bash
-git clone https://github.com/Armur-Ai/Armur-Code-Scanner.git
-cd Armur-Code-Scanner
-```
+    ```bash
+    git clone https://github.com/Armur-Ai/Armur-Code-Scanner.git
+    cd Armur-Code-Scanner
+    ```
 
-2.  **Start the Development Environment:**
+2. **Start the Development Environment:**
 
-First copy/rename `.env.example` file to `.env` and run the following commands
+    First copy/rename `.env.example` file to `.env` and run the following commands
 
-```bash
-make docker-up
-```
+    ```bash
+    make docker-up
+    ```
 
-OR
+    OR
 
-```bash
-docker-compose up --build -d
-```
+    ```bash
+    docker-compose up --build -d
+    ```
 
 This command does the following:
 
@@ -147,7 +147,7 @@ The codebase is organized into the following main directories:
 ├── internal/               # Private application code
 │   ├── api/                # API handlers and routes
 │   ├── redis/              # Redis client connection
-│   ├── tasks/              # Task implememtation for queueing, running and storing results on redis
+│   ├── tasks/              # Task implementation for queueing, running and storing results on redis
 │   ├── tools/              # Integration with security tools for the different programming languages
 │   └── worker/             # Background worker implementation that adds tasks to the queue
 ├── pkg/                    # Public libraries that can be used by external applications
@@ -157,10 +157,10 @@ The codebase is organized into the following main directories:
 ├── postman/                # Postman collection for API testing
 ├── rule_config/            # Configuration files for security tools
 ├── shared_tmp/             # Temporary files directory
-└── docker-compose.yml      # Docker composition for development
-└── Dockerfile              # Dockerfile for the code scanner
-└── .env.example            # env example file
-└── README.md               # env example file
+├── docker-compose.yml      # Docker composition for development
+├── Dockerfile              # Dockerfile for the code scanner
+├── .env.example            # env example file
+└── README.md               # This file
 
 ```
 
@@ -213,7 +213,7 @@ Armur Code Scanner is capable of detecting the following types of vulnerabilitie
 | CWE-798   | Use of Hard-coded Credentials                                                                                          |
 | CWE-352   | Cross-Site Request Forgery (CSRF)                                                                                      |
 | CWE-601   | URL Redirection to Untrusted Site ('Open Redirect')                                                                    |
-| MANY MORE |
+|          | MANY MORE                                                                                                              |
 
 ### Additional Vulnerability Information
 
@@ -259,43 +259,49 @@ This allows you to scan any local project without needing to push it to a remote
 
 ### Testing with Postman
 
-#### A Postman collection is included in the /postman directory for easy API testing.
+A Postman collection is included in the `/postman` directory for easy API testing.
 
 You can use Postman to send requests to the API endpoints. Here's how:
 
-1.  **API Endpoints:**
+1. **API Endpoints:**
 
 - **`POST /api/v1/scan/repo`:**
 
   - Body:
+
     ```json
     {
       "repository_url": "https://github.com/go-git/go-git",
       "language": "go"
     }
     ```
+
   - Returns a `task_id` upon successful submission.
 
 - **`POST /api/v1/advanced-scan/repo`:**
 
   - Body:
+
     ```json
     {
       "repository_url": "https://github.com/go-git/go-git",
       "language": "go"
     }
     ```
+
   - Returns a `task_id` upon successful submission.
 
 - **`POST /api/v1/scan/local`:**
 
   - Body:
+
     ```json
     {
-      "local_path": "/armurs/repos/<repo_name>",
+      "local_path": "/armur/repos/<repo_name>",
       "language": "go"
     }
     ```
+
   - Returns a `task_id` upon successful submission. Note, place your repo copy under the `shared_tmp` directory.
 
 - **`POST /api/v1/scan/file`:**

@@ -46,7 +46,8 @@ var statusCmd = &cobra.Command{
 		fmt.Printf("  Task ID: %s\n", taskID)
 		fmt.Printf("  Status: %s\n", status)
 
-		if status == "success" {
+		switch status {
+		case "success":
 			fmt.Println(color.GreenString("  Scan Results:"))
 			for category, details := range result {
 				fmt.Printf("    Category: %s\n", category)
@@ -63,8 +64,10 @@ var statusCmd = &cobra.Command{
 					fmt.Printf("      Details: %v\n", details)
 				}
 			}
-		} else if status == "failed" {
+		case "failed":
 			color.Red("  Scan failed.")
+		default:
+			fmt.Printf("  Status: %s\n", status)
 		}
 	},
 }

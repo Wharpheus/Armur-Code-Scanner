@@ -1,4 +1,4 @@
-package internal
+package tools
 
 import (
 	// Replace with the actual import path for utils

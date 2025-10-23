@@ -1,0 +1,11 @@
+{
+  "tool": "slither",
+  "findings": [
+    {
+      "rule": "reentrancy",
+      "severity": "HIGH",
+      "file": "UnsafeBank.sol",
+      "line": 12
+    }
+  ]
+}

@@ -39,35 +39,31 @@ The CLI can be configured in the following ways:
 
 2. **Interactive Mode**:
 
-```bash
-armur-cli config
-```
+   ```bash
+   armur-cli config
+   ```
 
-This will launch an interactive prompt where you can:
+   This will launch an interactive prompt where you can:
 
-- Select the configuration key to set (API URL, Redis URL, or API Key)
-- Enter the new value
+   - Select the configuration key to set (API URL or Redis URL)
+   - Enter the new value
 
 3. **Command Line**:
 
-```bash
-# Set API URL
-armur-cli config api_url https://api.armur.ai
+   ```bash
+   # Set API URL
+   armur-cli config api_url https://api.armur.ai
 
-# Set Redis URL
-armur-cli config redis_url redis://localhost:6379
-
-# Set API Key
-armur-cli config api_key your-api-key-here
-```
+   # Set Redis URL
+   armur-cli config redis_url redis://localhost:6379
+   ```
 
 4. **Environment Variables**:
 
-```bash
-export ARMUR_API_URL=https://api.armur.ai
-export ARMUR_REDIS_URL=redis://localhost:6379
-export ARMUR_API_KEY=your-api-key-here
-```
+   ```bash
+   export ARMUR_API_URL=https://api.armur.ai
+   export ARMUR_REDIS_URL=redis://localhost:6379
+   ```
 
 ### API Audit
 
@@ -170,4 +166,4 @@ For support, please:
 
 1. Check the [documentation](docs/)
 2. Open an issue on GitHub
-3. Contact our support team at support@armur.com
+3. Contact our support team at <support@armur.com>

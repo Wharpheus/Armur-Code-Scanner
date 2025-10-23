@@ -5,6 +5,7 @@ import (
 	"armur-codescanner/internal/redis"
 	"armur-codescanner/internal/worker"
 	"log"
+	"net"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,12 @@ import (
 // @license.url https://opensource.org/licenses/MIT
 // @BasePath /
 func main() {
+	// Default to binding on loopback for safer local development.
+	bindAddr := os.Getenv("BIND_ADDR")
+	if bindAddr == "" {
+		bindAddr = "127.0.0.1"
+	}
+
 	router := gin.Default()
 	go func() {
 		if err := startAsynqWorker(); err != nil {
@@ -42,7 +49,8 @@ func main() {
 	if port == "" {
 		port = "4500"
 	}
-	if err := router.Run(":" + port); err != nil {
+	addr := net.JoinHostPort(bindAddr, port)
+	if err := router.Run(addr); err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
 }

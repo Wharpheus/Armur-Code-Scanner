@@ -48,7 +48,7 @@ func ScanHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Repository URL is required"})
 		return
 	}
-	if request.Language != "" && request.Language != "go" && request.Language != "py" && request.Language != "js" {
+	if request.Language != "" && request.Language != "go" && request.Language != "py" && request.Language != "js" && request.Language != "solidity" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid language"})
 		return
 	}
@@ -87,7 +87,7 @@ func AdvancedScanResult(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Repository URL is required"})
 		return
 	}
-	if request.Language != "" && request.Language != "go" && request.Language != "py" && request.Language != "js" {
+	if request.Language != "" && request.Language != "go" && request.Language != "py" && request.Language != "js" && request.Language != "solidity" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid language"})
 		return
 	}
@@ -269,7 +269,7 @@ func ScanLocalHandler(c *gin.Context) {
 		return
 	}
 
-	if request.Language != "" && request.Language != "go" && request.Language != "py" && request.Language != "js" {
+	if request.Language != "" && request.Language != "go" && request.Language != "py" && request.Language != "js" && request.Language != "solidity" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid language"})
 		return
 	}

@@ -1,0 +1,27 @@
+# VCS
+.git
+.gitignore
+
+# Node / docs-site
+/docs-site/node_modules
+/docs-site/build
+/docs-site/.cache
+
+# Go build artifacts
+/bin
+/build
+/dist
+coverage.*
+*.out
+
+# Editor/OS
+.DS_Store
+*.swp
+*.swo
+.vscode
+.idea
+
+# Temp
+/tmp
+/shared_tmp
+**/*~

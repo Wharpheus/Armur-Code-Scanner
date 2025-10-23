@@ -2,15 +2,17 @@ package utils
 
 import (
 	pkg "armur-codescanner/pkg/common"
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/jung-kurt/gofpdf"
 )
 
 type CWEData struct {
@@ -38,6 +40,8 @@ const (
 	ANTIPATTERNS_BUGS = "antipatterns_bugs"
 	SECURITY_ISSUES   = "security_issues"
 	UNKNOWN           = "unknown"
+	GAS_ISSUES        = "gas_issues"
+	BUILD_ISSUES      = "build_issues"
 )
 
 // ReformatAdvancedScanResults reformats advanced scan results
@@ -63,14 +67,6 @@ func ReformatScanResults(results map[string]interface{}) map[string]interface{} 
 	}
 
 	return reformattedResults
-}
-
-// Helper function to ensure that nil values are replaced with empty slices
-func ensureNonNull(value interface{}) interface{} {
-	if value == nil {
-		return []interface{}{} // Return empty slice instead of nil
-	}
-	return value
 }
 
 func ReformatAdvancedScanResults(results map[string]interface{}) map[string]interface{} {
@@ -219,7 +215,7 @@ func ReformatInfraSecurity(results map[string]interface{}) []map[string]interfac
 
 func LoadCWEData(filePath string) ([]CWEData, error) {
 	// Read the file
-	file, err := ioutil.ReadFile(filePath)
+	file, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading file: %v", err)
 	}
@@ -257,13 +253,13 @@ func ReformatComplexFunctions(results map[string]interface{}) []map[string]inter
 	issues, ok := results[COMPLEX_FUNCTIONS]
 	if !ok || issues == nil {
 		log.Printf("No COMPLEX_FUNCTIONS key or it is nil")
-		return nil
+		return []map[string]interface{}{}
 	}
 
 	issueList, ok := issues.([]interface{})
 	if !ok {
 		log.Printf("COMPLEX_FUNCTIONS is not a []interface{}")
-		return nil
+		return []map[string]interface{}{}
 	}
 
 	for _, issue := range issueList {
@@ -286,9 +282,25 @@ func ReformatComplexFunctions(results map[string]interface{}) []map[string]inter
 func ReformatDocstringIssues(results map[string]interface{}) []map[string]interface{} {
 	docstringGroupedIssues := make(map[string][]interface{})
 
-	for _, issue := range results[DOCKSTRING_ABSENT].([]interface{}) {
-		issueMap := issue.(map[string]interface{})
-		path := issueMap["path"].(string)
+	docstringIssues, ok := results[DOCKSTRING_ABSENT]
+	if !ok || docstringIssues == nil {
+		return []map[string]interface{}{}
+	}
+
+	issueList, ok := docstringIssues.([]interface{})
+	if !ok {
+		return []map[string]interface{}{}
+	}
+
+	for _, issue := range issueList {
+		issueMap, ok := issue.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		path, ok := issueMap["path"].(string)
+		if !ok {
+			continue
+		}
 		docstringGroupedIssues[path] = append(docstringGroupedIssues[path], issue)
 	}
 
@@ -364,14 +376,30 @@ func ReformatSecurityIssues(results map[string]interface{}) []map[string]interfa
 func ReformatAntipatternsBugs(results map[string]interface{}) []map[string]interface{} {
 	antipatternGroupedIssues := make(map[string]map[string][]interface{})
 
-	for _, issue := range results[ANTIPATTERNS_BUGS].([]interface{}) {
-		issueMap := issue.(map[string]interface{})
+	antipatternIssues, ok := results[ANTIPATTERNS_BUGS]
+	if !ok || antipatternIssues == nil {
+		return []map[string]interface{}{}
+	}
+
+	issueList, ok := antipatternIssues.([]interface{})
+	if !ok {
+		return []map[string]interface{}{}
+	}
+
+	for _, issue := range issueList {
+		issueMap, ok := issue.(map[string]interface{})
+		if !ok {
+			continue
+		}
 		messageKey := UNKNOWN
 		if message, ok := issueMap["message"].(string); ok {
 			messageKey = message
 		}
 
-		path := issueMap["path"].(string)
+		path, ok := issueMap["path"].(string)
+		if !ok {
+			continue
+		}
 		if _, exists := antipatternGroupedIssues[messageKey]; !exists {
 			antipatternGroupedIssues[messageKey] = make(map[string][]interface{})
 		}
@@ -422,9 +450,8 @@ func ReformatSCAIssues(results map[string]interface{}) []map[string]interface{} 
 
 // CloneRepo clones a repository to a temporary directory
 func CloneRepo(repositoryURL string) (string, error) {
-	baseDir := "/armur/repos" // Set a consistent directory for cloned repositories
-	err := os.MkdirAll(baseDir, os.ModePerm)
-	if err != nil {
+	baseDir := "/armur/repos"
+	if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("error creating base directory: %w", err)
 	}
 
@@ -434,33 +461,46 @@ func CloneRepo(repositoryURL string) (string, error) {
 	}
 
 	_, err = git.PlainClone(tempDir, false, &git.CloneOptions{
-		URL:      repositoryURL,
-		Progress: os.Stdout,
+		URL:   repositoryURL,
+		Depth: 1,
+		// Disable progress to avoid noisy logs in server mode
+		Tags: git.NoTags,
 	})
 	if err != nil {
 		return "", fmt.Errorf("error cloning repository: %w", err)
 	}
-
 	return tempDir, nil
 }
 
 // DetectRepoLanguage detects the language of a repository
 func DetectRepoLanguage(directory string) string {
-	languages := map[string]int{"go": 0, "py": 0, "js": 0}
+	languages := map[string]int{"go": 0, "py": 0, "js": 0, "solidity": 0}
 
-	filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+	skipDirs := map[string]struct{}{
+		".git": {}, "node_modules": {}, "vendor": {}, "venv": {}, "__pycache__": {},
+		"dist": {}, "build": {}, ".next": {}, ".cache": {},
+	}
+
+	_ = filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() {
-			switch {
-			case strings.HasSuffix(info.Name(), ".go"):
-				languages["go"]++
-			case strings.HasSuffix(info.Name(), ".py"):
-				languages["py"]++
-			case strings.HasSuffix(info.Name(), ".js"):
-				languages["js"]++
+		if info.IsDir() {
+			if _, skip := skipDirs[info.Name()]; skip {
+				return filepath.SkipDir
 			}
+			return nil
+		}
+		name := strings.ToLower(info.Name())
+		switch {
+		case strings.HasSuffix(name, ".go"):
+			languages["go"]++
+		case strings.HasSuffix(name, ".py"):
+			languages["py"]++
+		case strings.HasSuffix(name, ".js"):
+			languages["js"]++
+		case strings.HasSuffix(name, ".sol"):
+			languages["solidity"]++
 		}
 		return nil
 	})
@@ -474,18 +514,21 @@ func DetectRepoLanguage(directory string) string {
 		}
 	}
 
-	return maxLang
+	return strings.ToLower(maxLang)
 }
 
 // DetectFileLanguage detects the language of a file
 func DetectFileLanguage(file string) string {
+	name := strings.ToLower(file)
 	switch {
-	case strings.HasSuffix(file, ".go"):
+	case strings.HasSuffix(name, ".go"):
 		return "go"
-	case strings.HasSuffix(file, ".py"):
+	case strings.HasSuffix(name, ".py"):
 		return "py"
-	case strings.HasSuffix(file, ".js"):
+	case strings.HasSuffix(name, ".js"):
 		return "js"
+	case strings.HasSuffix(name, ".sol"):
+		return "solidity"
 	default:
 		return ""
 	}
@@ -495,36 +538,38 @@ func RemoveNonRelevantFiles(dirPath string, language string) error {
 	// Get extensions for the specified language
 	extensions, ok := pkg.LanguageFileExtensions[strings.ToLower(language)]
 	if !ok {
-		extensions = []string{} // Empty slice if language not found
+		extensions = []string{}
 	}
 
-	// Walk through directory
+	skipDirs := map[string]struct{}{
+		".git": {}, "node_modules": {}, "vendor": {}, "venv": {}, "__pycache__": {},
+		"dist": {}, "build": {}, ".next": {}, ".cache": {},
+	}
+
 	return filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-
-		// Skip directories
 		if info.IsDir() {
+			if _, skip := skipDirs[info.Name()]; skip {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
-		// Check if file should be kept
+		name := strings.ToLower(info.Name())
 		shouldKeep := false
 		for _, ext := range extensions {
-			if strings.HasSuffix(strings.ToLower(info.Name()), ext) {
+			if strings.HasSuffix(name, ext) {
 				shouldKeep = true
 				break
 			}
 		}
-
-		// Remove file if it shouldn't be kept
 		if !shouldKeep {
 			if err := os.Remove(path); err != nil {
 				return err
 			}
 		}
-
 		return nil
 	})
 }
@@ -536,6 +581,7 @@ func InitCategorizedResults() map[string][]interface{} {
 		SECURITY_ISSUES:   {},
 		COMPLEX_FUNCTIONS: {},
 		ANTIPATTERNS_BUGS: {},
+		GAS_ISSUES:        {},
 	}
 }
 
@@ -755,4 +801,73 @@ func GenerateSANSReports(taskResult interface{}) ([]SANSReportItem, error) {
 	}
 
 	return sansReport, nil
+}
+
+func GeneratePdfReport(taskResult interface{}) ([]byte, error) {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 16)
+
+	// --- Title Page ---
+	pdf.SetFillColor(40, 40, 40)
+	pdf.Rect(0, 0, 210, 297, "F") // Full page background
+	pdf.SetTextColor(255, 255, 255)
+
+	pdf.SetY(100)
+	pdf.SetFont("Arial", "B", 32)
+	pdf.Cell(0, 10, "Security Assessment Report")
+	pdf.Ln(20)
+
+	pdf.SetFont("Arial", "", 16)
+	// TODO: Get project name from task data
+	pdf.Cell(0, 10, "Project: DNC GEMINI (Placeholder)")
+	pdf.Ln(10)
+	pdf.Cell(0, 10, fmt.Sprintf("Date: %s", time.Now().Format("02 Jan 2006")))
+
+	// --- Findings Summary Page ---
+	pdf.AddPage()
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetFont("Arial", "B", 24)
+	pdf.Cell(0, 20, "Findings Summary")
+	pdf.Ln(25)
+
+	taskResultMap, ok := taskResult.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("taskResult is not a valid map")
+	}
+
+	// --- Summary Table ---
+	pdf.SetFont("Arial", "B", 12)
+	pdf.Cell(40, 10, "Category")
+	pdf.Cell(40, 10, "Count")
+	pdf.Ln(10)
+	pdf.SetFont("Arial", "", 12)
+
+	totalIssues := 0
+	categories := []string{SECURITY_ISSUES, GAS_ISSUES, ANTIPATTERNS_BUGS, COMPLEX_FUNCTIONS, DOCKSTRING_ABSENT}
+
+	for _, category := range categories {
+		if issues, ok := taskResultMap[category].([]interface{}); ok {
+			count := len(issues)
+			totalIssues += count
+			pdf.Cell(40, 10, category)
+			pdf.Cell(40, 10, fmt.Sprintf("%d", count))
+			pdf.Ln(10)
+		}
+	}
+
+	pdf.Ln(10)
+	pdf.SetFont("Arial", "B", 14)
+	pdf.Cell(40, 10, "Total Issues Found:")
+	pdf.Cell(40, 10, fmt.Sprintf("%d", totalIssues))
+	pdf.Ln(20)
+
+	// --- Disclaimer ---
+	pdf.SetY(250)
+	pdf.SetFont("Arial", "I", 8)
+	pdf.MultiCell(0, 5, "This is an automated security assessment. The findings in this report are generated by static analysis tools and should be manually verified. This report does not guarantee the absence of all vulnerabilities.", "", "C", false)
+
+	var buf bytes.Buffer
+	err := pdf.Output(&buf)
+	return buf.Bytes(), err
 }

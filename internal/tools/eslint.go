@@ -1,4 +1,4 @@
-package internal
+package tools
 
 import (
 	utils "armur-codescanner/pkg"
@@ -84,18 +84,16 @@ func CategorizeESLintAdvancedResults(eslintResults []map[string]interface{}, dir
 		"no-useless-assignment",
 	}
 
-	if eslintResults != nil {
-		for _, fileResult := range eslintResults {
-			for _, message := range fileResult["messages"].([]interface{}) {
-				msg := message.(map[string]interface{})
-				if checkID, ok := msg["ruleId"].(string); ok {
-					msg["check_id"] = checkID
-					delete(msg, "ruleId")
-					msg["file"] = strings.ReplaceAll(fileResult["filePath"].(string), directory, "")
+	for _, fileResult := range eslintResults {
+		for _, message := range fileResult["messages"].([]interface{}) {
+			msg := message.(map[string]interface{})
+			if checkID, ok := msg["ruleId"].(string); ok {
+				msg["check_id"] = checkID
+				delete(msg, "ruleId")
+				msg["file"] = strings.ReplaceAll(fileResult["filePath"].(string), directory, "")
 
-					if contains(deadCodeESLintRuleIDs, checkID) {
-						categorizedResults[utils.DEAD_CODE] = append(categorizedResults[utils.DEAD_CODE], msg)
-					}
+				if contains(deadCodeESLintRuleIDs, checkID) {
+					categorizedResults[utils.DEAD_CODE] = append(categorizedResults[utils.DEAD_CODE], msg)
 				}
 			}
 		}
