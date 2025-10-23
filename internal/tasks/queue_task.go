@@ -33,3 +33,29 @@ func EnqueueScanTask(scanType, repoURL, language string) (string, error) {
 
 	return taskID, nil
 }
+
+func EnqueueBatchScanTask(contractPaths []string, language, network string) (string, error) {
+	taskID := uuid.New().String()
+
+	taskPayload, err := json.Marshal(map[string]interface{}{
+		"contract_paths": contractPaths,
+		"language":       language,
+		"network":        network,
+		"scan_type":      "batch_scan",
+		"task_id":        taskID,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	client := asynq.NewClient(redis.RedisClientOptions())
+	defer client.Close()
+
+	task := asynq.NewTask("batch:scan", taskPayload)
+	_, err = client.Enqueue(task, asynq.Queue("default"), asynq.MaxRetry(3), asynq.Timeout(60*time.Minute))
+	if err != nil {
+		return "", err
+	}
+
+	return taskID, nil
+}

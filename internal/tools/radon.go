@@ -40,7 +40,7 @@ func CategorizeRadonResults(results string, directory string) map[string][]inter
 
 	if results != "" {
 		// Parse the JSON results from Radon
-		var parsedResults map[string][]map[string]interface{}
+		var parsedResults map[string][]interface{}
 		err := json.Unmarshal([]byte(results), &parsedResults)
 		if err != nil {
 			log.Printf("Error parsing Radon results: %v\n", err)
@@ -52,8 +52,10 @@ func CategorizeRadonResults(results string, directory string) map[string][]inter
 			relativePath := strings.Replace(filePath, directory, "", 1)
 			for _, issue := range issues {
 				// Add the path to the issue and append it directly to COMPLEX_FUNCTIONS
-				issue.(map[string]interface{})["path"] = relativePath
-				categorizedResults[utils.COMPLEX_FUNCTIONS] = append(categorizedResults[utils.COMPLEX_FUNCTIONS], issue)
+				if issueMap, ok := issue.(map[string]interface{}); ok {
+					issueMap["path"] = relativePath
+					categorizedResults[utils.COMPLEX_FUNCTIONS] = append(categorizedResults[utils.COMPLEX_FUNCTIONS], issueMap)
+				}
 			}
 		}
 	}

@@ -1,0 +1,80 @@
+# Custom Solidity rules for Semgrep
+
+rules:
+  - id: reentrancy-pattern
+    patterns:
+      - pattern: |
+          function $FUNC(...) ... {
+            ...
+            $TARGET.call{value: $AMOUNT}(...);
+            ...
+            $STATE = ...;
+          }
+    message: "Potential reentrancy: state changes after external call"
+    severity: HIGH
+    languages: [solidity]
+
+  - id: unchecked-send
+    patterns:
+      - pattern: |
+          $TARGET.send($AMOUNT);
+    message: "Unchecked send: consider using transfer or call with checks"
+    severity: MEDIUM
+    languages: [solidity]
+
+  - id: integer-overflow
+    patterns:
+      - pattern: |
+          $VAR = $A + $B;
+      - pattern-not: |
+          $VAR = $A.safeAdd($B);
+    message: "Potential integer overflow in addition"
+    severity: HIGH
+    languages: [solidity]
+
+  - id: defi-flashloan-attack
+    patterns:
+      - pattern: |
+          function flashLoan(...) external {
+            ...
+            $CALLBACK(...);
+            ...
+          }
+      - pattern-inside: |
+          function $CALLBACK(...) external {
+            ...
+            // No validation of loan amount or borrower
+          }
+    message: "Flash loan callback without proper validation"
+    severity: HIGH
+    languages: [solidity]
+
+  - id: oracle-manipulation
+    patterns:
+      - pattern: |
+          $PRICE = $ORACLE.getPrice();
+          ...
+          if ($PRICE > $THRESHOLD) {
+            ...
+          }
+    message: "Potential oracle price manipulation vulnerability"
+    severity: HIGH
+    languages: [solidity]
+
+  - id: proxy-storage-collision
+    patterns:
+      - pattern-inside: |
+          contract $PROXY is ... {
+            ...
+            mapping(...) $STORAGE;
+            ...
+          }
+      - pattern: |
+          contract $IMPL is ... {
+            ...
+            mapping(...) $STORAGE;
+            ...
+          }
+    message: "Potential storage collision in upgradeable proxy"
+    severity: HIGH
+    languages: [solidity]

@@ -39,6 +39,9 @@ func RegisterRoutes(r *gin.Engine) {
 		api.POST("/scan/file", ScanFile)
 		api.POST("/scan/local", ScanLocalHandler)
 
+		// Batch scan route for multiple contracts
+		api.POST("/batch-scan/contracts", BatchScanHandler)
+
 		// status
 		api.GET("/status/:task_id", TaskStatus)
 

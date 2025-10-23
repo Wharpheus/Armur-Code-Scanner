@@ -12,15 +12,21 @@ Visit [armur.ai](https://armur.ai) to use the cloud-based version of this tool, 
 ## Table of Contents
 
 1. [Key Features](#key-features)
-2. [Using the CLI tool](#using-the-armur-cli)
-3. [How It Works](#how-armur-code-scanner-works)
-4. [Getting Started](#getting-started)
-5. [Project Structure](#project-structure)
-6. [Supported vulnerabilities](#supported-vulnerabilities)
-7. [Additional vulnerabilities information](#additional-vulnerability-information)
-8. [Scanning Local Repositories via Mounted Volume](#scanning-local-repositories-via-mounted-volume)
-9. [Testing with Postman](#testing-with-postman)
-10. [License](#license)
+2. [System Requirements](#system-requirements)
+3. [Windows Compatibility](#windows-compatibility)
+4. [Using the CLI tool](#using-the-armur-cli)
+5. [How It Works](#how-armur-code-scanner-works)
+6. [Getting Started](#getting-started)
+7. [Detailed Running Instructions](#detailed-running-instructions)
+8. [API Functions and Endpoints](#api-functions-and-endpoints)
+9. [Project Structure](#project-structure)
+10. [Supported Languages and Tools](#supported-languages-and-tools)
+11. [Supported Vulnerabilities](#supported-vulnerabilities)
+12. [Additional Vulnerabilities Information](#additional-vulnerability-information)
+13. [Scanning Local Repositories via Mounted Volume](#scanning-local-repositories-via-mounted-volume)
+14. [Testing with Postman](#testing-with-postman)
+15. [Troubleshooting](#troubleshooting)
+16. [License](#license)
 
 ## Using the Armur CLI
 
@@ -66,7 +72,7 @@ armur-cli scan <github-url> --language go
 
 ## Key Features
 
-- **Multi-Language Support**: Scans Go, Python, and JavaScript code.
+- **Multi-Language Support**: Scans Go, Python, JavaScript, and Solidity smart contracts.
 - **Comprehensive Vulnerability Detection**: Identifies a broad spectrum of vulnerabilities using various static analysis tools.
 - **Code Quality Analysis**: Performs checks for code style issues, complex functions, and dead code.
 - **OWASP and SANS Compliance**: Generates reports based on OWASP and SANS guidelines.
@@ -75,6 +81,36 @@ armur-cli scan <github-url> --language go
 - **Asynchronous Task Processing**: Leverages Asynq for background task processing and Redis for result storage.
 - **API Documentation**: Comprehensive API documentation using Swagger/OpenAPI.
 - **Easy Development**: Makefile provided for easy building, testing, and running.
+- **Docker-Based**: Runs in containers for consistent environments across platforms.
+
+## System Requirements
+
+- **Docker** and **Docker Compose** (recommended for easy setup)
+- **Go 1.22+** (for development)
+- **Git** (for cloning repositories)
+- **4GB RAM minimum** (8GB recommended for large scans)
+- **Linux/macOS/Windows with WSL2** (see Windows section below)
+
+## Windows Compatibility
+
+Yes, Armur Code Scanner runs on Windows! However, due to the underlying static analysis tools being primarily Linux-based, we recommend using Docker or WSL2 for the best experience.
+
+### Running on Windows
+
+1. **Using Docker (Recommended):**
+   - Install Docker Desktop for Windows
+   - Follow the Docker setup instructions below
+   - All tools run in Linux containers, so no additional setup needed
+
+2. **Using WSL2:**
+   - Install WSL2 and Ubuntu distribution
+   - Install Go and Docker in WSL2
+   - Run the scanner from within the WSL2 environment
+
+3. **Native Windows (Limited):**
+   - Go application runs natively
+   - Some tools (bandit, eslint, etc.) may require additional setup or may not work
+   - Not recommended for full functionality
 
 ## How Armur Code Scanner Works
 
@@ -100,6 +136,8 @@ npm i --legacy-peer-deps
 ```
 
 This should open our developer logs at `localhost:3000`, and you can open these from your browser
+
+## Detailed Running Instructions
 
 ### Prerequisites
 
@@ -136,6 +174,177 @@ This command does the following:
 - Generates the swagger documentation
 - After running this, the application will be available at `http://localhost:4500`.
 - Swagger documentation will be available here `http://localhost:4500/swagger/index.html`
+
+### Alternative Running Methods
+
+#### Using Makefile Commands
+
+```bash
+# Build the application
+make build
+
+# Run tests
+make test
+
+# Run security scans
+make sec-scan
+
+# Clean build artifacts
+make clean
+
+# Run all CI checks
+make ci
+```
+
+#### Running Without Docker (Advanced)
+
+If you prefer not to use Docker, you can run the application directly:
+
+1. **Install Dependencies:**
+
+   ```bash
+   go mod download
+   ```
+
+2. **Start Redis:**
+
+   ```bash
+   redis-server
+   ```
+
+3. **Run the Application:**
+
+   ```bash
+   go run cmd/server/main.go
+   ```
+
+**Note:** Running without Docker requires all static analysis tools (gosec, bandit, eslint, etc.) to be installed on your system, which can be complex and platform-dependent.
+
+#### Using the CLI
+
+See the [CLI Documentation](/cli/README.md) for detailed CLI usage instructions.
+
+## API Functions and Endpoints
+
+The Armur Code Scanner provides a REST API with the following endpoints:
+
+### Core Scanning Endpoints
+
+#### `POST /api/v1/scan/repo`
+
+- **Function:** Initiates a basic security scan on a Git repository
+- **Parameters:**
+  - `repository_url` (string): Git repository URL
+  - `language` (string, optional): Programming language (go, py, js, solidity)
+- **Returns:** Task ID for tracking scan progress
+- **Use Case:** Standard security and code quality analysis
+
+#### `POST /api/v1/advanced-scan/repo`
+
+- **Function:** Runs comprehensive advanced scans including SCA, secrets detection, and infrastructure checks
+- **Parameters:** Same as basic scan
+- **Returns:** Task ID
+- **Use Case:** Deep analysis for production codebases
+
+#### `POST /api/v1/scan/file`
+
+- **Function:** Scans an individual file uploaded via form-data
+- **Parameters:**
+  - `file` (multipart/form-data): File to scan
+- **Returns:** Task ID
+- **Use Case:** Quick analysis of single files
+
+#### `POST /api/v1/scan/local`
+
+- **Function:** Scans a local directory mounted in the container
+- **Parameters:**
+  - `local_path` (string): Path to local directory (e.g., `/armur/repos/my-project`)
+  - `language` (string, optional): Programming language
+- **Returns:** Task ID
+- **Use Case:** Scanning local codebases without Git
+
+### Status and Results
+
+#### `GET /api/v1/status/{task_id}`
+
+- **Function:** Retrieves scan status and results
+- **Returns:**
+  - `status`: "pending" or "success"
+  - `data`: Scan results (when complete)
+  - `task_id`: Original task identifier
+
+#### `GET /api/v1/reports/owasp/{task_id}`
+
+- **Function:** Generates OWASP-compliant security report
+- **Returns:** Structured report with CWE mappings and remediation advice
+
+#### `GET /api/v1/reports/sans/{task_id}`
+
+- **Function:** Generates SANS Top 25 compliant report
+- **Returns:** Report focused on most critical security issues
+
+### Scan Result Categories
+
+All scans return results in these categories:
+
+- **security_issues**: Security vulnerabilities with CWE mappings
+- **antipatterns_bugs**: Code quality issues and potential bugs
+- **complex_functions**: Functions that may be too complex
+- **docstring_absent**: Missing documentation
+- **gas_issues**: Solidity gas optimization opportunities
+- **build_issues**: Compilation and build problems
+
+Advanced scans additionally include:
+
+- **dead_code**: Unused code detection
+- **duplicate_code**: Code duplication analysis
+- **secret_detection**: Exposed secrets and credentials
+- **infra_security**: Infrastructure misconfigurations
+- **sca**: Software Composition Analysis vulnerabilities
+
+## Supported Languages and Tools
+
+Armur Code Scanner supports multiple programming languages, each with specialized static analysis tools:
+
+### Go
+
+- **gosec**: Security issues specific to Go
+- **golint**: Code style and linting
+- **govet**: Suspicious code constructs
+- **staticcheck**: Advanced static analysis
+- **gocyclo**: Cyclomatic complexity analysis
+- **godeadcode**: Dead code detection
+
+### Python
+
+- **bandit**: Security vulnerabilities
+- **pydocstyle**: Docstring style checking
+- **radon**: Code complexity and maintainability
+- **pylint**: Comprehensive linting
+- **vulture**: Dead code detection
+
+### JavaScript
+
+- **ESLint**: Security and code quality rules
+- **Custom security rules**: XSS, injection, etc.
+
+### Solidity (Smart Contracts)
+
+- **slither**: Comprehensive static analysis
+- **mythril**: Symbolic execution and security analysis
+- **oyente**: Symbolic execution
+- **securify**: Property verification
+- **smartcheck**: Static analysis
+- **solc**: Compiler diagnostics and AST analysis
+
+### Cross-Language Tools
+
+- **Semgrep**: Custom security rules and pattern matching
+- **OSV-Scanner**: Software Composition Analysis (SCA)
+- **Trufflehog**: Secret detection
+- **Checkov**: Infrastructure as Code security
+- **Trivy**: Container and infrastructure scanning
+- **JSCPD**: Code duplication detection
 
 ### Project Structure
 
@@ -323,6 +532,69 @@ You can use Postman to send requests to the API endpoints. Here's how:
   - Replace `:task_id` with the ID from a previous request.
   - Returns the SANS report.
 
-### License
+## Troubleshooting
+
+### Common Issues
+
+#### Docker Issues
+
+- **Port 4500 already in use:** Change the port in `docker-compose.yml` or stop the conflicting service
+- **Redis connection failed:** Ensure Redis container is running: `docker ps | grep redis`
+- **Permission denied:** On Linux, you may need to run `sudo chmod 666 /var/run/docker.sock`
+
+#### Scan Issues
+
+- **Language not detected:** Specify the language explicitly in API requests
+- **Large repository timeout:** Increase timeout in `internal/tasks/queue_task.go`
+- **Out of memory:** Increase Docker memory limit or scan smaller codebases
+
+#### Tool-Specific Issues
+
+- **Bandit/Pylint not found:** Ensure Python tools are installed in the container
+- **ESLint config errors:** Check if `rule_config/eslint/` files exist
+- **Solidity compilation fails:** Verify Solidity version compatibility
+
+### Logs and Debugging
+
+#### View Application Logs
+
+```bash
+# Docker logs
+docker-compose logs -f app
+
+# Worker logs
+docker-compose logs -f
+```
+
+#### Enable Debug Mode
+
+Set environment variable: `LOG_LEVEL=debug`
+
+#### Check Redis Data
+
+```bash
+# Connect to Redis container
+docker exec -it redis redis-cli
+
+# List keys
+KEYS *
+
+# Get task result
+GET <task_id>
+```
+
+### Performance Tuning
+
+- **Concurrent workers:** Adjust `Concurrency` in `cmd/server/main.go`
+- **Redis TTL:** Modify TTL in `internal/tasks/result_store.go`
+- **Memory limits:** Update Docker Compose memory settings
+
+### Getting Help
+
+- Check existing [GitHub Issues](https://github.com/Armur-AI/Armur-Code-Scanner/issues)
+- Join our [Discord](https://discord.gg/PEycrqvd) for community support
+- Contact <support@armur.ai> for enterprise support
+
+## License
 
 **This project is licensed under the MIT License - see the LICENSE file for details.**

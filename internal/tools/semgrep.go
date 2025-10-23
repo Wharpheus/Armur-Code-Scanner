@@ -18,6 +18,85 @@ func RunSemgrep(directory string, rules string) map[string]interface{} {
 	return newcatresult
 }
 
+func RunSemgrepSolidity(directory string, extraArgs ...string) map[string]interface{} {
+	log.Println("Running Semgrep with Solidity rules...")
+
+	args := []string{"--json", "--config=rule_config/semgrep/solidity"}
+	if len(extraArgs) > 0 {
+		args = append(args, extraArgs...)
+	}
+	args = append(args, directory)
+
+	out, err := runSemgrepDockerSolidity(directory, args)
+	if err != nil {
+		out = runSemgrepNativeSolidity(args)
+	}
+	return categorizeSemgrepSolidity(out, directory)
+}
+
+func runSemgrepDockerSolidity(directory string, args []string) (string, error) {
+	// Check docker availability
+	if _, err := exec.LookPath("docker"); err != nil {
+		return "", fmt.Errorf("docker not found")
+	}
+	// Compose docker command: mount directory to /src and run semgrep there
+	dockerArgs := []string{"run", "--rm", "-v", fmt.Sprintf("%s:/src", directory), "-w", "/src", "returntocorp/semgrep:latest", "semgrep"}
+	dockerArgs = append(dockerArgs, args...)
+	cmd := exec.Command("docker", dockerArgs...)
+	output, err := cmd.Output()
+	return string(output), err
+}
+
+func runSemgrepNativeSolidity(args []string) string {
+	cmd := exec.Command("semgrep", args...)
+	output, _ := cmd.Output()
+	return string(output)
+}
+
+func categorizeSemgrepSolidity(jsonOut string, directory string) map[string]interface{} {
+	categorized := utils.InitCategorizedResults()
+	if strings.TrimSpace(jsonOut) == "" {
+		return utils.ConvertCategorizedResults(categorized)
+	}
+
+	var parsed map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonOut), &parsed); err != nil {
+		log.Printf("Error parsing Semgrep Solidity output: %v", err)
+		return utils.ConvertCategorizedResults(categorized)
+	}
+
+	results, _ := parsed["results"].([]interface{})
+	for _, res := range results {
+		result, ok := res.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		path := safeString(result["path"])
+		checkID := safeString(result["check_id"])
+		message := safeString(result["extra"].(map[string]interface{})["message"])
+		severity := formatSeverity(result)
+
+		relPath := path
+		if strings.HasPrefix(path, directory) {
+			relPath = strings.TrimPrefix(path, directory+"/")
+		}
+
+		issue := map[string]interface{}{
+			"path":     relPath,
+			"line":     safeString(result["start"].(map[string]interface{})["line"]),
+			"message":  message,
+			"severity": severity,
+			"rule":     checkID,
+			"tool":     "semgrep-solidity",
+		}
+
+		categorized[utils.SECURITY_ISSUES] = append(categorized[utils.SECURITY_ISSUES], issue)
+	}
+
+	return utils.ConvertCategorizedResults(categorized)
+}
+
 func runSemgrepOnRepo(directory string, rules string) string {
 	cmd := exec.Command("semgrep", rules, directory, "--json")
 	output, _ := cmd.Output()
@@ -134,31 +213,6 @@ func formatSeverity(result map[string]interface{}) string {
 	if !ok {
 		return "UNKNOWN"
 	}
-	switch strings.ToUpper(originalSeverity) {
-	case "INFO":
-		return "LOW"
-	case "WARNING":
-		return "MEDIUM"
-	case "ERROR":
-		return "HIGH"
-	default:
-		return originalSeverity
-	}
-}
-					"column":  fmt.Sprintf("%v", result["start"].(map[string]interface{})["col"]),
-					"line":    fmt.Sprintf("%v", result["start"].(map[string]interface{})["line"]),
-					"message": result["extra"].(map[string]interface{})["message"],
-					"path":    path,
-				}
-				categorizedResults[ANTIPATTERNS_BUGS] = append(categorizedResults[ANTIPATTERNS_BUGS], antipatternBug)
-			}
-		}
-	}
-	return categorizedResults
-}
-
-func formatSeverity(result map[string]interface{}) string {
-	originalSeverity := result["extra"].(map[string]interface{})["severity"].(string)
 	switch strings.ToUpper(originalSeverity) {
 	case "INFO":
 		return "LOW"

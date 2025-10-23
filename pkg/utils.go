@@ -15,6 +15,21 @@ import (
 	"github.com/jung-kurt/gofpdf"
 )
 
+type Issue struct {
+	Path    string `json:"path"`
+	Line    int    `json:"line"`
+	Column  int    `json:"column,omitempty"`
+	Message string `json:"message"`
+	RuleID  string `json:"ruleId,omitempty"`
+}
+
+type SimpleScanResults struct {
+	ComplexFunctions []Issue `json:"complex_functions"`
+	DocstringAbsent  []Issue `json:"docstring_absent"`
+	AntipatternsBugs []Issue `json:"antipatterns_bugs"`
+	SecurityIssues   []Issue `json:"security_issues"`
+}
+
 type CWEData struct {
 	CWE                 string            `json:"cwe"`
 	GoodPracticeExample map[string]string `json:"good_practice_example"`
@@ -30,22 +45,25 @@ const (
 
 // Constants
 const (
-	DEAD_CODE         = "dead_code"
-	DUPLICATE_CODE    = "duplicate_code"
-	SECRET_DETECTION  = "secret_detection"
-	INFRA_SECURITY    = "infra_security"
-	SCA               = "sca"
-	COMPLEX_FUNCTIONS = "complex_functions"
-	DOCKSTRING_ABSENT = "dockstring_absent"
-	ANTIPATTERNS_BUGS = "antipatterns_bugs"
-	SECURITY_ISSUES   = "security_issues"
-	UNKNOWN           = "unknown"
-	GAS_ISSUES        = "gas_issues"
-	BUILD_ISSUES      = "build_issues"
+	DEAD_CODE          = "dead_code"
+	DUPLICATE_CODE     = "duplicate_code"
+	SECRET_DETECTION   = "secret_detection"
+	INFRA_SECURITY     = "infra_security"
+	SCA                = "sca"
+	COMPLEX_FUNCTIONS  = "complex_functions"
+	DOCKSTRING_ABSENT  = "dockstring_absent"
+	ANTIPATTERNS_BUGS  = "antipatterns_bugs"
+	SECURITY_ISSUES    = "security_issues"
+	UNKNOWN            = "unknown"
+	GAS_ISSUES         = "gas_issues"
+	GAS_OPTIMIZATIONS  = "gas_optimizations"
+	LP_PAIRING_CHECKS  = "lp_pairing_checks"
+	DEFI_OPTIMIZATIONS = "defi_optimizations"
+	BUILD_ISSUES       = "build_issues"
 )
 
-// ReformatAdvancedScanResults reformats advanced scan results
-func ReformatScanResults(results map[string][]Issue) *SimpleScanResults {
+// ReformatScanResults reformats simple scan results
+func ReformatScanResults(results map[string]interface{}) *SimpleScanResults {
 	reformattedResults := &SimpleScanResults{
 		ComplexFunctions: []Issue{},
 		DocstringAbsent:  []Issue{},
@@ -53,17 +71,69 @@ func ReformatScanResults(results map[string][]Issue) *SimpleScanResults {
 		SecurityIssues:   []Issue{},
 	}
 
-	if data, ok := results[COMPLEX_FUNCTIONS]; ok && len(data) > 0 {
-		reformattedResults.ComplexFunctions = data
+	if data, ok := results[COMPLEX_FUNCTIONS]; ok {
+		if issues, ok := data.([]interface{}); ok {
+			for _, item := range issues {
+				if issueMap, ok := item.(map[string]interface{}); ok {
+					issue := Issue{
+						Path:    getString(issueMap, "path"),
+						Line:    getInt(issueMap, "line"),
+						Column:  getInt(issueMap, "column"),
+						Message: getString(issueMap, "message"),
+						RuleID:  getString(issueMap, "ruleId"),
+					}
+					reformattedResults.ComplexFunctions = append(reformattedResults.ComplexFunctions, issue)
+				}
+			}
+		}
 	}
-	if data, ok := results[DOCKSTRING_ABSENT]; ok && len(data) > 0 {
-		reformattedResults.DocstringAbsent = data
+	if data, ok := results[DOCKSTRING_ABSENT]; ok {
+		if issues, ok := data.([]interface{}); ok {
+			for _, item := range issues {
+				if issueMap, ok := item.(map[string]interface{}); ok {
+					issue := Issue{
+						Path:    getString(issueMap, "path"),
+						Line:    getInt(issueMap, "line"),
+						Column:  getInt(issueMap, "column"),
+						Message: getString(issueMap, "message"),
+						RuleID:  getString(issueMap, "ruleId"),
+					}
+					reformattedResults.DocstringAbsent = append(reformattedResults.DocstringAbsent, issue)
+				}
+			}
+		}
 	}
-	if data, ok := results[ANTIPATTERNS_BUGS]; ok && len(data) > 0 {
-		reformattedResults.AntipatternsBugs = data
+	if data, ok := results[ANTIPATTERNS_BUGS]; ok {
+		if issues, ok := data.([]interface{}); ok {
+			for _, item := range issues {
+				if issueMap, ok := item.(map[string]interface{}); ok {
+					issue := Issue{
+						Path:    getString(issueMap, "path"),
+						Line:    getInt(issueMap, "line"),
+						Column:  getInt(issueMap, "column"),
+						Message: getString(issueMap, "message"),
+						RuleID:  getString(issueMap, "ruleId"),
+					}
+					reformattedResults.AntipatternsBugs = append(reformattedResults.AntipatternsBugs, issue)
+				}
+			}
+		}
 	}
-	if data, ok := results[SECURITY_ISSUES]; ok && len(data) > 0 {
-		reformattedResults.SecurityIssues = data
+	if data, ok := results[SECURITY_ISSUES]; ok {
+		if issues, ok := data.([]interface{}); ok {
+			for _, item := range issues {
+				if issueMap, ok := item.(map[string]interface{}); ok {
+					issue := Issue{
+						Path:    getString(issueMap, "path"),
+						Line:    getInt(issueMap, "line"),
+						Column:  getInt(issueMap, "column"),
+						Message: getString(issueMap, "message"),
+						RuleID:  getString(issueMap, "ruleId"),
+					}
+					reformattedResults.SecurityIssues = append(reformattedResults.SecurityIssues, issue)
+				}
+			}
+		}
 	}
 
 	return reformattedResults
@@ -450,8 +520,8 @@ func ReformatSCAIssues(results map[string]interface{}) []map[string]interface{} 
 
 // CloneRepo clones a repository to a temporary directory
 func CloneRepo(repositoryURL string) (string, error) {
-	baseDir := "/armur/repos"
-	if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
+	baseDir := "/tmp/armur/repos"
+	if err := os.MkdirAll(baseDir, 0755); err != nil {
 		return "", fmt.Errorf("error creating base directory: %w", err)
 	}
 

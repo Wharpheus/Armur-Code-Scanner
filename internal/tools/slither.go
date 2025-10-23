@@ -17,6 +17,7 @@ const (
 
 // RunSlither executes Slither on the given directory and converts the output to Armur categories.
 // It prefers dockerized execution and falls back to native slither if unavailable.
+// Enhanced with dependency checks for known vulnerable contracts.
 func RunSlither(directory string, extraArgs ...string) map[string]interface{} {
 	log.Println("Running Slither...")
 
@@ -34,6 +35,18 @@ func RunSlither(directory string, extraArgs ...string) map[string]interface{} {
 		out = runSlitherNative(args)
 	}
 	return categorizeSlither(out, directory)
+}
+
+func RunSlitherDependencies(directory string) map[string]interface{} {
+	log.Println("Running Slither dependency checks...")
+
+	args := []string{"--json", "-", "--check-known-thefts"}
+
+	out, err := runSlitherDocker(directory, args)
+	if err != nil || strings.TrimSpace(out) == "" {
+		out = runSlitherNative(args)
+	}
+	return categorizeSlitherDependencies(out, directory)
 }
 
 func runSlitherNative(args []string) string {
@@ -122,6 +135,57 @@ func categorizeSlither(jsonOut string, directory string) map[string]interface{} 
 				bucket = GAS_ISSUES
 			}
 			categorized[bucket] = append(categorized[bucket], issue)
+		}
+	}
+
+	return utils.ConvertCategorizedResults(categorized)
+}
+
+func categorizeSlitherDependencies(jsonOut string, directory string) map[string]interface{} {
+	categorized := utils.InitCategorizedResults()
+	if strings.TrimSpace(jsonOut) == "" {
+		return utils.ConvertCategorizedResults(categorized)
+	}
+
+	var parsed map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonOut), &parsed); err != nil {
+		log.Printf("Error parsing Slither dependencies output: %v", err)
+		return utils.ConvertCategorizedResults(categorized)
+	}
+
+	// Slither dependency check output structure
+	results, _ := parsed["results"].(map[string]interface{})
+	detectors, _ := results["detectors"].([]interface{})
+	for _, d := range detectors {
+		det, _ := d.(map[string]interface{})
+		description := safeString(det["description"])
+
+		for _, elem := range toSlice(det["elements"]) {
+			e := elem.(map[string]interface{})
+			sourceMapping, _ := e["source_mapping"].(map[string]interface{})
+			filename := safeString(sourceMapping["filename_absolute"])
+			if filename == "" {
+				filename = safeString(sourceMapping["filename"])
+			}
+			line := safeIntString(sourceMapping["lines"])
+
+			rel := filename
+			if rel != "" {
+				if r, err := filepath.Rel(directory, filename); err == nil {
+					rel = r
+				}
+			}
+
+			issue := map[string]interface{}{
+				"path":     rel,
+				"line":     line,
+				"message":  description,
+				"severity": "HIGH", // Dependency issues are typically high severity
+				"rule":     "known-vulnerable-dependency",
+				"tool":     "slither-dependencies",
+			}
+
+			categorized[utils.SECURITY_ISSUES] = append(categorized[utils.SECURITY_ISSUES], issue)
 		}
 	}
 

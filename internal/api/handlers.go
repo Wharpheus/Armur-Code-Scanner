@@ -23,6 +23,13 @@ type LocalScanRequest struct {
 	Language  string `json:"language" example:"go"`
 }
 
+// BatchScanRequest represents a batch scan request for multiple contracts
+type BatchScanRequest struct {
+	ContractPaths []string `json:"contract_paths" binding:"required" example:"["/armur/contracts/Token.sol", "/armur/contracts/LP.sol"]"`
+	Language      string   `json:"language" example:"solidity"`
+	Network       string   `json:"network" example:"polygon"`
+}
+
 // ScanHandler godoc
 // @Summary Trigger a code scan on a repository.
 // @Description Enqueues a scan task for a given repository URL and language.
@@ -119,7 +126,7 @@ func ScanFile(c *gin.Context) {
 		return
 	}
 
-	baseDir := "/armur/repos"
+	baseDir := "/tmp/armur/repos"
 	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base directory", "details": err.Error()})
@@ -281,11 +288,66 @@ func ScanLocalHandler(c *gin.Context) {
 	}
 
 	// Enqueue the scan task with "local" scan type
-	taskID, err := tasks.EnqueueScanTask(utils.SimpleScan, request.LocalPath, request.Language)
+	taskID, err := tasks.EnqueueScanTask(utils.LocalScan, request.LocalPath, request.Language)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue scan task", "details": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"task_id": taskID})
+}
+
+// BatchScanHandler godoc
+// @Summary Trigger batch gas optimization and LP pairing scans for multiple contracts.
+// @Description Enqueues batch scan tasks for multiple Solidity contracts with gas optimization and DeFi analysis.
+// @Tags scan
+// @Accept json
+// @Produce json
+// @Param request body BatchScanRequest true "Request body containing contract paths and network"
+// @Success 200 {object} map[string]string "Successfully enqueued batch scan task"
+// @Failure 400 {object} map[string]string "Invalid request parameters"
+// @Failure 500 {object} map[string]string "Failed to enqueue batch scan task"
+// @Router /api/v1/batch-scan/contracts [post]
+func BatchScanHandler(c *gin.Context) {
+	var request BatchScanRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(request.ContractPaths) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Contract paths are required"})
+		return
+	}
+
+	if request.Language != "solidity" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Batch scanning currently only supports Solidity"})
+		return
+	}
+
+	if request.Network != "polygon" && request.Network != "amoy" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Network must be 'polygon' or 'amoy'"})
+		return
+	}
+
+	// Validate all contract paths exist
+	for _, path := range request.ContractPaths {
+		if info, err := os.Stat(path); os.IsNotExist(err) || info.IsDir() {
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid contract path: %s", path)})
+			return
+		}
+	}
+
+	// Enqueue batch scan task
+	taskID, err := tasks.EnqueueBatchScanTask(request.ContractPaths, request.Language, request.Network)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue batch scan task", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"task_id": taskID,
+		"message": fmt.Sprintf("Batch scanning %d contracts for %s network", len(request.ContractPaths), request.Network),
+	})
 }

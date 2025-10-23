@@ -14,15 +14,15 @@ type ScanTaskHandler struct{}
 
 func (h *ScanTaskHandler) ProcessTask(ctx context.Context, task *asynq.Task) error {
 
-	var taskData map[string]string
+	var taskData map[string]interface{}
 	if err := json.Unmarshal(task.Payload(), &taskData); err != nil {
 		return fmt.Errorf("failed to unmarshal task payload: %w", err)
 	}
 
-	repoURL := taskData["repository_url"]
-	language := taskData["language"]
-	scanType := taskData["scan_type"]
-	taskID := taskData["task_id"]
+	repoURL, _ := taskData["repository_url"].(string)
+	language, _ := taskData["language"].(string)
+	scanType, _ := taskData["scan_type"].(string)
+	taskID, _ := taskData["task_id"].(string)
 
 	var result map[string]interface{}
 	var err error
@@ -35,6 +35,8 @@ func (h *ScanTaskHandler) ProcessTask(ctx context.Context, task *asynq.Task) err
 		result, _ = tasks.ScanFileTask(repoURL)
 	case utils.LocalScan:
 		result = tasks.RunScanTaskLocal(repoURL, language)
+	case "batch_scan":
+		result = tasks.RunBatchScanTask(taskData)
 	default:
 		return fmt.Errorf("unknown scan type: %s", scanType)
 	}

@@ -6,10 +6,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
+	"armur-codescanner/internal/solidity"
 	"armur-codescanner/internal/tools"
 	utils "armur-codescanner/pkg"
-	"armur-codescanner/pkg/solidity"
 )
 
 func RunScanTask(repositoryURL, language string) map[string]interface{} {
@@ -170,12 +172,47 @@ func runSimpleScanInternal(dirPath string, language string, cleanup bool) (map[s
 		solcDiagnostics := tools.RunSolcCheck(dirPath, conf.Version, conf.Remappings)
 		mergeResults(categorizedResults, solcDiagnostics)
 
-		// Run Slither and Mythril with same directory target
-		slitherResults := tools.RunSlither(dirPath)
-		mergeResults(categorizedResults, slitherResults)
+		// Run advanced Solidity tools in parallel for better performance
+		type toolResult struct {
+			results map[string]interface{}
+		}
 
-		mythrilResults := tools.RunMythril(dirPath)
-		mergeResults(categorizedResults, mythrilResults)
+		resultsChan := make(chan toolResult, 4)
+
+		go func() { resultsChan <- toolResult{results: tools.RunSlither(dirPath)} }()
+		go func() { resultsChan <- toolResult{results: tools.RunMythril(dirPath)} }()
+		go func() { resultsChan <- toolResult{results: tools.RunOyente(dirPath)} }()
+		go func() { resultsChan <- toolResult{results: tools.RunSecurify(dirPath)} }()
+
+		// Collect results
+		for i := 0; i < 4; i++ {
+			res := <-resultsChan
+			mergeResults(categorizedResults, res.results)
+		}
+
+		// Run SmartCheck separately as it might have different requirements
+		smartcheckResults := tools.RunSmartCheck(dirPath)
+		mergeResults(categorizedResults, smartcheckResults)
+
+		// Run custom Solidity Semgrep rules
+		semgrepSolidityResults := tools.RunSemgrepSolidity(dirPath)
+		mergeResults(categorizedResults, semgrepSolidityResults)
+
+		// Check for known vulnerable dependencies
+		slitherDepResults := tools.RunSlitherDependencies(dirPath)
+		mergeResults(categorizedResults, slitherDepResults)
+
+		// Run gas optimizer
+		gasOptResults := tools.RunGasOptimizer(dirPath)
+		mergeResults(categorizedResults, gasOptResults)
+
+		// Run LP pairing checks
+		lpCheckResults := tools.RunLPPairingChecks(dirPath)
+		mergeResults(categorizedResults, lpCheckResults)
+
+		// Run DeFi optimizations
+		defiOptResults := tools.RunDeFiOptimizations(dirPath)
+		mergeResults(categorizedResults, defiOptResults)
 	}
 	if cleanup {
 		err := os.RemoveAll(dirPath)
@@ -186,7 +223,12 @@ func runSimpleScanInternal(dirPath string, language string, cleanup bool) (map[s
 
 	newCatResult := utils.ConvertCategorizedResults(categorizedResults)
 	finalresult := utils.ReformatScanResults(newCatResult)
-	return finalresult, nil
+	return map[string]interface{}{
+		"complex_functions": finalresult.ComplexFunctions,
+		"docstring_absent":  finalresult.DocstringAbsent,
+		"antipatterns_bugs": finalresult.AntipatternsBugs,
+		"security_issues":   finalresult.SecurityIssues,
+	}, nil
 }
 
 func RunSimpleScanLocal(dirPath string, language string) (map[string]interface{}, error) {
@@ -231,6 +273,30 @@ func RunAdvancedScans(dirPath string, language string) (map[string]interface{}, 
 	case "js":
 		eslintResults := tools.RunESLintAdvanced(dirPath)
 		mergeResults(categorizedResults, eslintResults)
+	case "solidity":
+		// Parallel execution for advanced Solidity scanning
+		resultsChan := make(chan map[string]interface{}, 5)
+
+		go func() { resultsChan <- tools.RunSlither(dirPath) }()
+		go func() { resultsChan <- tools.RunMythril(dirPath) }()
+		go func() { resultsChan <- tools.RunOyente(dirPath) }()
+		go func() { resultsChan <- tools.RunSecurify(dirPath) }()
+		go func() { resultsChan <- tools.RunSmartCheck(dirPath) }()
+
+		for i := 0; i < 5; i++ {
+			result := <-resultsChan
+			mergeResults(categorizedResults, result)
+		}
+
+		// Additional checks
+		solcResults := tools.RunSolcCheck(dirPath, "", nil) // AST analysis
+		mergeResults(categorizedResults, solcResults)
+
+		semgrepResults := tools.RunSemgrepSolidity(dirPath)
+		mergeResults(categorizedResults, semgrepResults)
+
+		slitherDepsResults := tools.RunSlitherDependencies(dirPath)
+		mergeResults(categorizedResults, slitherDepsResults)
 	}
 	err = os.RemoveAll(dirPath)
 	if err != nil {
@@ -295,4 +361,217 @@ func ScanFileTask(filePath string) (map[string]interface{}, error) {
 	}
 
 	return categorizedResults, nil
+}
+
+func RunBatchScanTask(taskData map[string]interface{}) map[string]interface{} {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Error while running batch scan: %v", r)
+		}
+	}()
+
+	// Extract batch scan parameters
+	contractPathsInterface, ok := taskData["contract_paths"]
+	if !ok {
+		return map[string]interface{}{
+			"status": "failed",
+			"error":  "contract_paths not provided",
+		}
+	}
+
+	// Type assertion for contract paths
+	var contractPaths []string
+	if paths, ok := contractPathsInterface.([]string); ok {
+		contractPaths = paths
+	} else if pathsInterface, ok := contractPathsInterface.([]interface{}); ok {
+		for _, p := range pathsInterface {
+			if pathStr, ok := p.(string); ok {
+				contractPaths = append(contractPaths, pathStr)
+			}
+		}
+	} else {
+		return map[string]interface{}{
+			"status": "failed",
+			"error":  "invalid contract_paths format",
+		}
+	}
+
+	language, _ := taskData["language"].(string)
+	network, _ := taskData["network"].(string)
+
+	log.Printf("Starting batch scan for %d contracts on %s network", len(contractPaths), network)
+
+	// Initialize results aggregation
+	batchResults := map[string]interface{}{
+		"batch_summary": map[string]interface{}{
+			"total_contracts": len(contractPaths),
+			"network":         network,
+			"language":        language,
+			"scan_timestamp":  time.Now().Format(time.RFC3339),
+		},
+		"contract_results":   []interface{}{},
+		"gas_optimizations":  []interface{}{},
+		"lp_pairing_checks":  []interface{}{},
+		"defi_optimizations": []interface{}{},
+		"security_issues":    []interface{}{},
+	}
+
+	// Process each contract
+	for i, contractPath := range contractPaths {
+		log.Printf("Processing contract %d/%d: %s", i+1, len(contractPaths), contractPath)
+
+		// Create temporary directory for this contract
+		tempDir, err := os.MkdirTemp("", "batch_contract_*")
+		if err != nil {
+			log.Printf("Error creating temp dir for contract %s: %v", contractPath, err)
+			continue
+		}
+
+		// Copy contract to temp directory
+		contractFile := filepath.Base(contractPath)
+		tempContractPath := filepath.Join(tempDir, contractFile)
+
+		if err := copyFile(contractPath, tempContractPath); err != nil {
+			log.Printf("Error copying contract %s: %v", contractPath, err)
+			os.RemoveAll(tempDir)
+			continue
+		}
+
+		// Run gas optimization scan on this contract
+		categorizedResults, err := RunSimpleScan(tempDir, language)
+		if err != nil {
+			log.Printf("Error scanning contract %s: %v", contractPath, err)
+			os.RemoveAll(tempDir)
+			continue
+		}
+
+		// Extract results for this contract
+		contractResult := map[string]interface{}{
+			"contract_path":    contractPath,
+			"contract_name":    contractFile,
+			"scan_results":     categorizedResults,
+			"gas_savings":      estimateGasSavings(categorizedResults),
+			"lp_compatibility": checkLPCompatibility(categorizedResults),
+		}
+
+		// Aggregate results
+		if gasOpts, ok := categorizedResults["gas_optimizations"]; ok {
+			if opts, ok := gasOpts.([]interface{}); ok {
+				batchResults["gas_optimizations"] = append(batchResults["gas_optimizations"].([]interface{}), opts...)
+			}
+		}
+		if lpChecks, ok := categorizedResults["lp_pairing_checks"]; ok {
+			if checks, ok := lpChecks.([]interface{}); ok {
+				batchResults["lp_pairing_checks"] = append(batchResults["lp_pairing_checks"].([]interface{}), checks...)
+			}
+		}
+		if defiOpts, ok := categorizedResults["defi_optimizations"]; ok {
+			if opts, ok := defiOpts.([]interface{}); ok {
+				batchResults["defi_optimizations"] = append(batchResults["defi_optimizations"].([]interface{}), opts...)
+			}
+		}
+		if secIssues, ok := categorizedResults["security_issues"]; ok {
+			if issues, ok := secIssues.([]interface{}); ok {
+				batchResults["security_issues"] = append(batchResults["security_issues"].([]interface{}), issues...)
+			}
+		}
+
+		batchResults["contract_results"] = append(batchResults["contract_results"].([]interface{}), contractResult)
+
+		// Clean up
+		os.RemoveAll(tempDir)
+	}
+
+	// Calculate batch summary
+	totalGasSavings := calculateTotalGasSavings(batchResults)
+	if summary, ok := batchResults["batch_summary"].(map[string]interface{}); ok {
+		summary["total_estimated_gas_savings"] = totalGasSavings
+		summary["contracts_processed"] = len(batchResults["contract_results"].([]interface{}))
+	}
+
+	log.Printf("Batch scan completed. Processed %d contracts with estimated gas savings: %s",
+		len(batchResults["contract_results"].([]interface{})), totalGasSavings)
+
+	return batchResults
+}
+
+func copyFile(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	_, err = destFile.ReadFrom(sourceFile)
+	return err
+}
+
+func estimateGasSavings(results map[string]interface{}) string {
+	totalSavings := 0
+
+	if gasOpts, ok := results["gas_optimizations"]; ok {
+		if opts, ok := gasOpts.([]interface{}); ok {
+			for _, opt := range opts {
+				if optMap, ok := opt.(map[string]interface{}); ok {
+					if savings, ok := optMap["estimated_savings"]; ok {
+						if savingsStr, ok := savings.(string); ok {
+							// Simple parsing of savings estimates
+							if strings.Contains(savingsStr, "200-500 gas") {
+								totalSavings += 350
+							} else if strings.Contains(savingsStr, "5000+ gas") {
+								totalSavings += 5000
+							} else if strings.Contains(savingsStr, "21000+ gas") {
+								totalSavings += 21000
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if totalSavings > 0 {
+		return fmt.Sprintf("%d gas per transaction", totalSavings)
+	}
+	return "Variable"
+}
+
+func checkLPCompatibility(results map[string]interface{}) string {
+	if lpChecks, ok := results["lp_pairing_checks"]; ok {
+		if checks, ok := lpChecks.([]interface{}); ok && len(checks) > 0 {
+			return "Compatible with Uniswap V2/V3 on Polygon/Amoy"
+		}
+	}
+	return "Not analyzed"
+}
+
+func calculateTotalGasSavings(batchResults map[string]interface{}) string {
+	totalSavings := 0
+	contractResults, ok := batchResults["contract_results"].([]interface{})
+	if !ok {
+		return "Unknown"
+	}
+
+	for _, result := range contractResults {
+		if resultMap, ok := result.(map[string]interface{}); ok {
+			if scanResults, ok := resultMap["scan_results"].(map[string]interface{}); ok {
+				if gasOpts, ok := scanResults["gas_optimizations"]; ok {
+					if opts, ok := gasOpts.([]interface{}); ok {
+						totalSavings += len(opts) * 1000 // Rough estimate per optimization
+					}
+				}
+			}
+		}
+	}
+
+	if totalSavings > 0 {
+		return fmt.Sprintf("%d+ gas per optimized contract", totalSavings)
+	}
+	return "Variable"
 }
