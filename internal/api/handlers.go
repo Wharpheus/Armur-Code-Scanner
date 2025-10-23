@@ -25,7 +25,7 @@ type LocalScanRequest struct {
 
 // BatchScanRequest represents a batch scan request for multiple contracts
 type BatchScanRequest struct {
-	ContractPaths []string `json:"contract_paths" binding:"required" example:"["/armur/contracts/Token.sol", "/armur/contracts/LP.sol"]"`
+	ContractPaths []string `json:"contract_paths" binding:"required" example:"[\"/armur/contracts/Token.sol\", \"/armur/contracts/LP.sol\"]"`
 	Language      string   `json:"language" example:"solidity"`
 	Network       string   `json:"network" example:"polygon"`
 }
