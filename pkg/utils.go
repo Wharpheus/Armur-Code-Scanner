@@ -941,3 +941,14 @@ func GeneratePdfReport(taskResult interface{}) ([]byte, error) {
 	err := pdf.Output(&buf)
 	return buf.Bytes(), err
 }
+
+func ReplaceTarget(args []string, old, new string) []string {
+	result := make([]string, len(args))
+	copy(result, args)
+	for i, arg := range result {
+		if arg == old {
+			result[i] = new
+		}
+	}
+	return result
+}

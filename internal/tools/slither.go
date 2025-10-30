@@ -8,6 +8,7 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -68,7 +69,7 @@ func runSlitherDocker(directory string, args []string) (string, error) {
 	}
 	// Compose docker command: mount directory to /src and run slither there
 	dockerArgs := []string{"run", "--rm", "-v", fmt.Sprintf("%s:/src", directory), "-w", "/src", "trailofbits/slither:latest", "slither"}
-	dockerArgs = append(dockerArgs, replaceTarget(args, directory, ".")...)
+	dockerArgs = append(dockerArgs, utils.ReplaceTarget(args, directory, ".")...)
 	cmd := exec.Command("docker", dockerArgs...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -110,7 +111,8 @@ func categorizeSlither(jsonOut string, directory string) map[string]interface{} 
 			if filename == "" {
 				filename = safeString(sourceMapping["filename"])
 			}
-			line := safeIntString(sourceMapping["lines"]) // Slither can provide an array or first line
+			start, _ := extractLines(sourceMapping)
+			line := fmt.Sprintf("%d", start) // Slither can provide an array or first line
 
 			rel := filename
 			if rel != "" {
@@ -130,7 +132,7 @@ func categorizeSlither(jsonOut string, directory string) map[string]interface{} 
 			}
 
 			// Classify gas vs security roughly by rule prefix
-			bucket := SECURITY_ISSUES
+			bucket := utils.SECURITY_ISSUES
 			if strings.Contains(strings.ToLower(rule), "gas") || strings.Contains(strings.ToLower(description), "gas") {
 				bucket = GAS_ISSUES
 			}
@@ -242,4 +244,36 @@ func toSlice(v interface{}) []interface{} {
 		return s
 	}
 	return []interface{}{}
+}
+
+// extractLines attempts to return start and end line numbers from slither source_mapping.
+func extractLines(sm map[string]interface{}) (int, int) {
+	// Preferred: "lines" is an array of numbers; take first and last
+	if lines, ok := sm["lines"].([]interface{}); ok && len(lines) > 0 {
+		first := toInt(lines[0])
+		last := toInt(lines[len(lines)-1])
+		if last < first {
+			last = first
+		}
+		return first, last
+	}
+	// Fallback: "lines" might be single number
+	if l, ok := sm["lines"].(float64); ok {
+		v := int(l)
+		return v, v
+	}
+	// As a last resort, return 0,0 meaning unknown
+	return 0, 0
+}
+
+func toInt(v interface{}) int {
+	switch t := v.(type) {
+	case float64:
+		return int(t)
+	case string:
+		if n, err := strconv.Atoi(t); err == nil {
+			return n
+		}
+	}
+	return 0
 }

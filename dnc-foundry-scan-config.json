@@ -1,0 +1,19 @@
+{
+  "api_endpoint": "http://localhost:4500/api/v1",
+  "scan_type": "local_directory",
+  "target": {
+    "local_path": "/home/wharpheus/tools/domain-ninja/dnc-foundry/src",
+    "language": "solidity"
+  },
+  "scan_mode": "advanced",
+  "description": "Security scan configuration for dnc-foundry Solidity smart contracts",
+  "expected_tools": [
+    "slither",
+    "mythril",
+    "oyente",
+    "securify",
+    "smartcheck",
+    "gasoptimizer"
+  ],
+  "notes": "This configuration is designed for scanning the external dnc-foundry Solidity project directory for security vulnerabilities and optimization opportunities."
+}

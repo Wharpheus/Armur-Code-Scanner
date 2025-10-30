@@ -1,5 +1,5 @@
-// internal/common/constants.go
-package pkg
+// pkg/common/constants.go
+package common
 
 // LanguageFileExtensions maps programming languages to their file extensions
 var LanguageFileExtensions = map[string][]string{
@@ -27,8 +27,11 @@ var LanguageFileExtensions = map[string][]string{
 		".go",    // Go source files
 		".mod",   // Go module files
 		".sum",   // Go module sum files
-		".cgo",   // Go Cgo files
+		".cgo",   // Cgo files
 		".proto", // Protocol Buffer files
+	},
+	"solidity": {
+		".sol", // Solidity files
 	},
 }
 

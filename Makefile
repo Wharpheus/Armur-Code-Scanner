@@ -13,6 +13,18 @@ GOFLAGS := -trimpath -buildvcs=false
 LDFLAGS := -s -w -buildid=
 PKG := ./...
 
+# Version metadata
+COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "dev")
+DATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "0.0.0-dev")
+APP_NAME ?= armur-codescanner
+BIN_DIR ?= dist
+BUILD_MAIN ?= ./cmd/server
+
+# Inject version info into main package if variables exist
+# Adjust -X keys to match your main package vars (main.version, main.commit, main.date)
+LDFLAGS := $(LDFLAGS) -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)
+
 # Default target
 .PHONY: all
 all: ci
@@ -45,7 +57,8 @@ test:
 # Build
 .PHONY: build
 build:
-	CGO_ENABLED=0 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o bin/armur-codescanner ./cmd/server
+	@mkdir -p $(BIN_DIR)
+	CGO_ENABLED=0 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/$(APP_NAME) $(BUILD_MAIN)
 
 # Security scans
 .PHONY: sec-scan
@@ -68,8 +81,15 @@ docker-down:
 	docker-compose down
 
 .PHONY: docker-build
+IMAGE ?= armur/armur-codescanner:$(VERSION)
 docker-build:
-	docker build --pull --no-cache -t armur/codescanner:dev .
+	docker build --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) --build-arg DATE=$(DATE) -t $(IMAGE) .
+
+.PHONY: dockerx
+# Multi-arch build using buildx
+PLATFORMS ?= linux/amd64,linux/arm64
+dockerx:
+	docker buildx build --platform $(PLATFORMS) --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) --build-arg DATE=$(DATE) -t $(IMAGE) .
 
 # CI aggregate
 .PHONY: ci

@@ -56,7 +56,7 @@ func runMythrilDocker(targetPath string, args []string) (string, error) {
 		relTarget = r
 	}
 	dockerArgs := []string{"run", "--rm", "-v", fmt.Sprintf("%s:/src", hostDir), "-w", "/src", "mythril/myth", "myth"}
-	dockerArgs = append(dockerArgs, replaceTarget(args, targetPath, relTarget)...)
+	dockerArgs = append(dockerArgs, replaceTargetInArgs(args, targetPath, relTarget)...)
 	cmd := exec.Command("docker", dockerArgs...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -71,7 +71,7 @@ func runMythrilDocker(targetPath string, args []string) (string, error) {
 	return "", fmt.Errorf("no output from mythril docker")
 }
 
-func replaceTarget(args []string, oldTarget, newTarget string) []string {
+func replaceTargetInArgs(args []string, oldTarget, newTarget string) []string {
 	res := make([]string, len(args))
 	copy(res, args)
 	if len(res) > 0 && res[len(res)-1] == oldTarget {
@@ -138,7 +138,7 @@ func categorizeMythril(jsonOut string, baseDir string) map[string]interface{} {
 			"rule":     title,
 			"tool":     "mythril",
 		}
-		categorized[SECURITY_ISSUES] = append(categorized[SECURITY_ISSUES], issue)
+		categorized[utils.SECURITY_ISSUES] = append(categorized[utils.SECURITY_ISSUES], issue)
 	}
 
 	return utils.ConvertCategorizedResults(categorized)

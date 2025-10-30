@@ -24,15 +24,18 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # Copy the rest of the source
 COPY . .
 
-# Build server binary
+# Build server binary with metadata
+ARG VERSION=0.0.0-dev
+ARG COMMIT=dev
+ARG DATE=unknown
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags "-s -w -buildid=" -o /out/armur-codescanner ./cmd/server
+    GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags "-s -w -buildid= -X main.version=$VERSION -X main.commit=$COMMIT -X main.date=$DATE" -o /out/armur-codescanner ./cmd/server
 
 ########################
 # Final minimal image
 ########################
-FROM gcr.io/distroless/static:nonroot@sha256:f25f1d3b2a0c3e9d2c0a02b3c2d2a4d4d9f0e0a7a8b9c0d1e2f3a4b5c6d7e8f9
+FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /app
 COPY --from=builder /out/armur-codescanner /app/armur-codescanner
@@ -44,4 +47,12 @@ ENV APP_PORT=4500 \
     BIND_ADDR=0.0.0.0
 
 # No shell, just the binary
+# OCI labels
+LABEL org.opencontainers.image.title="armur-codescanner" \
+      org.opencontainers.image.description="Armur Code Scanner server" \
+      org.opencontainers.image.source="https://github.com/armur-ai/Armur-Code-Scanner" \
+      org.opencontainers.image.version="$VERSION" \
+      org.opencontainers.image.revision="$COMMIT" \
+      org.opencontainers.image.created="$DATE"
+
 ENTRYPOINT ["/app/armur-codescanner"]

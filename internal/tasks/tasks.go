@@ -55,10 +55,12 @@ func RunScanTaskLocal(repoUrl, language string) map[string]interface{} {
 
 	dirPath := repoUrl
 
-	language, err := prepareScanDirectory(dirPath, language)
-	if err != nil {
-		return map[string]interface{}{"status": "failed", "error": err.Error()}
+	// For local scans, detect language if not specified but NEVER delete files
+	if language == "" {
+		language = utils.DetectRepoLanguage(dirPath)
+		log.Println("Language detected:", language)
 	}
+
 	categorizedResults, err := RunSimpleScanLocal(dirPath, language)
 	if err != nil {
 		return map[string]interface{}{
